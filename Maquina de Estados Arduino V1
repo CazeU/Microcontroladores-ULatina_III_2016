@@ -64,7 +64,7 @@ void setup() {
  lcd.begin(16,2);
  
  pinMode(pir, INPUT);
- pinMode(redSwitch,INPUT);
+ //pinMode(redSwitch,INPUT);
  pinMode(temp, INPUT); 
  
 }
@@ -76,6 +76,154 @@ void loop() {
 
 //---Fuciones de salida para los estados---
 
+//---Estado Noche---
+void estadoNoche (){
+  noche: //etiqueta para goto
+  cerradura.write(cerrada);
+  serial.print(0);
+  tempPass = "";
+  lcd.clear();
+  i = 6;
+  while(!passVerificada){
+  lcd.setCursor(0,0);
+  lcd.print("Modo Nocturno");
+  lcd.setCursor(0,1);
+  lcd.print("PASS>>");
+  teclaPresionada = teclado.getKey(); //va a leer las teclas que se precionen
+    if(teclaPresionada != NO_KEY){ //para que no guarde espacios en blanco mentras no se precionan teclas
+      if(teclaPresionada==0 || teclaPresionada==1 || teclaPresionada==2 || teclaPresionada==3 || teclaPresionada==4 ||
+         teclaPresionada==5 || teclaPresionada==6 || teclaPresionada==7 || teclaPresionada==8 || teclaPresionada==9 )
+      {
+        //este ciclo tiene dos funciones "pedir" la password y poner * en lugar de los caracteres para mentener la password escondida 
+       tempPass += teclaPresionada;
+       lcd.setCursor(i,1);
+       lcd.print("*");
+       i++;
+       tone(buzzer2,800,200);
+      }
+      else if(teclaPresionada == "#"){ //cancelar la opracion
+        break;
+      }
+      else if(teclapresionada == "*"){//verificar la pasword
+        if(password == tempPass){
+          lcd.clear();
+          lcd.setCursor(0,0);
+          lcd.print("Sistema Desarmado");
+          lcd.setCursor(0,1);
+          lcd.print("----------------");
+          tone(buzzer2,800,1000);
+          //pasa a estado Desarme, falta esa bariable           
+        }
+        else{
+          tempPass="";
+          tone(buzzer2,500,500);
+          goto noche;          
+        }
+      }
+    }
+  }
+}
+
+
+//---Estado Armado---
+void estadoArmado (){
+  armado: //etiqueta para goto
+  cerradura.write(cerrada);
+  serial.print(0);
+  tempPass = "";
+  lcd.clear();
+  i = 6;
+  while(!passVerificada){
+  lcd.setCursor(0,0);
+  lcd.print("Sistema Armado");
+  lcd.setCursor(0,1);
+  lcd.print("PASS>>");
+  teclaPresionada = teclado.getKey(); //va a leer las teclas que se precionen
+    if(teclaPresionada != NO_KEY){ //para que no guarde espacios en blanco mentras no se precionan teclas
+      if(teclaPresionada==0 || teclaPresionada==1 || teclaPresionada==2 || teclaPresionada==3 || teclaPresionada==4 ||
+         teclaPresionada==5 || teclaPresionada==6 || teclaPresionada==7 || teclaPresionada==8 || teclaPresionada==9 )
+      {
+        //este ciclo tiene dos funciones "pedir" la password y poner * en lugar de los caracteres para mentener la password escondida 
+       tempPass += teclaPresionada;
+       lcd.setCursor(i,1);
+       lcd.print("*");
+       i++;
+       tone(buzzer2,800,200);
+      }
+      else if(teclaPresionada == "#"){ //cancelar la opracion
+        break;
+      }
+      else if(teclapresionada == "*"){//verificar la pasword
+        if(password == tempPass){
+          lcd.clear();
+          lcd.setCursor(0,0);
+          lcd.print("Sistema Desarmado");
+          lcd.setCursor(0,1);
+          lcd.print("----------------");
+          tone(buzzer2,800,1000);
+          //pasa a estado Desarme, falta esa variable           
+        }
+        else{
+          tempPass="";
+          tone(buzzer2,500,500);
+          goto armado;          
+        }
+      }
+    }
+  }
+}
+
+
+//---Estado Intruso---
+void estadoIntruso(){
+  intrusos: //etiqueta para goto
+  cerradura.write(cerrada);
+  sonidoIntruso()
+  serial.print(2);
+  tempPass = "";
+  lcd.clear();
+  i = 6;
+  while(!passVerificada){
+  lcd.setCursor(0,0);
+  lcd.print("¡Alerta Intruso!");
+  lcd.setCursor(0,1);
+  lcd.print("PASS>>");
+  teclaPresionada = teclado.getKey(); //va a leer las teclas que se precionen
+    if(teclaPresionada != NO_KEY){ //para que no guarde espacios en blanco mentras no se precionan teclas
+      if(teclaPresionada==0 || teclaPresionada==1 || teclaPresionada==2 || teclaPresionada==3 || teclaPresionada==4 ||
+         teclaPresionada==5 || teclaPresionada==6 || teclaPresionada==7 || teclaPresionada==8 || teclaPresionada==9 )
+      {
+        //este ciclo tiene dos funciones "pedir" la password y poner * en lugar de los caracteres para mentener la password escondida 
+       tempPass += teclaPresionada;
+       lcd.setCursor(i,1);
+       lcd.print("*");
+       i++;
+       tone(buzzer2,800,200);
+      }
+      else if(teclaPresionada == "#"){ //cancelar la operacion
+        break;
+      }
+      else if(teclapresionada == "*"){//verificar la password
+        if(password == tempPass){
+          lcd.clear();
+          lcd.setCursor(0,0);
+          lcd.print("Sistema Desarmado");
+          lcd.setCursor(0,1);
+          lcd.print("----------------");
+          tone(buzzer2,800,1000);
+          //pasa a estado Desarme, falta esa variable           
+        }
+        else{
+          tempPass="";
+          tone(buzzer2,500,500);
+          goto intrusos;          
+        }
+      }
+    }
+  }
+} 
+
+
 //---Estado Fuego---
 void estadoFuego (){
   fuego: //etiqueta para goto
@@ -84,7 +232,7 @@ void estadoFuego (){
   serial.print(1);
   tempPass = "";
   lcd.clear();
-  i = 5;
+  i = 6;
   while(!passVerificada){
   lcd.setCursor(0,0);
   lcd.print("¡Alerta Fuego!");
