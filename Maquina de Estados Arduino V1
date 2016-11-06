@@ -39,7 +39,7 @@ const int cerrada = 0;  //posicion del servo que cierra la cerradura
 
 //Definiendo pines de los sensores y actuadores
 const int pir = A0; //sensor de movimiento
-//const int redSwitch = A1; //hace falta el sensor magnetico para puertas y ventanas
+const int redSwitch = A1; //hace falta el sensor magnetico para puertas y ventanas
 const int temp = A2; //sensor de temperatura
 const int humo = A3; //sensor de humo 
 const int buzzer1 = 11; //buzzer para las alarmas
@@ -47,7 +47,9 @@ const int buzzer2 = 12; //buzzer para el panel de control
 
 
 //Otras Variables y Constantes 
+unsigned long tiempoActual = 0;
 unsigned long tiempoAnterior = 0;
+const int tiempoEspera = 15000; //Tiempo de espera de 15 segundos
 String password = "2580"; //Master pass por defecto.
 String modNoche = "1234"; //Pass para activar modo nocturno
 String tempPass = ""; //este va a guardar temporalmanete la pass que uno mete para compararla con las claves guardadas
@@ -56,6 +58,8 @@ boolean passCambiada = false;
 boolean passGuardada = true;
 int dobleCheck; //Contador para confirmar la nueva clave.
 int i = 1; //Contador para arreglos
+int estado = 0; //0=Desarmado, 1=Armado, 2=Noche, 3=cambioPass, 4=intruso, 5=Fuego
+int humo = 0; 
 
 
 void setup() {
@@ -70,11 +74,146 @@ void setup() {
 }
 
 void loop() {
+void loop() {
+  int valorHumo = analogRead(sensorHumo);
+  if(valorHumo > 350){
+    humo = 1;
+  }
 
+  //Maquina de estados:
+
+  switch(estado){
+    case 0: //Desarme 
+     humo = 0;
+     estadoDesarme(); 
+    break;
+
+    case 1: //estado armado
+     tiempoActual=millis();
+     estadoArmado()  
+     if(digitalRead(pir)|| digitalRead(redSwitch){
+      tiempoAnterior = tiempoActual;
+      if(tiempoActual - tiempoAnterior <= tiempoEspera){
+       lcd.clear();
+       lcd.setCursor(0,0);
+       lcd.print("¡Alerta Intruso!");
+       lcd.setCursor(0,1);
+       lcd.print("PASS>>");
+       sonidoEspera();
+       estadoArmado();
+      }
+      else{
+        estado = 4; //pasa a estado intruso 
+      }
+     }
+     if(digitalRead(temp)||humo==1){
+      estado = 5;
+     }
+    break;
+
+    case 2: //Noche
+     estadoNoche ();
+     if(digitalRead(redSwitch)){
+      estado = 4;
+     }
+     if(digitalRead(temp)||humo==1){
+      estado = 5;
+     }
+    break;
+
+    case 3: //cambio pass
+    //estadoCambioPass();
+    break;
+
+    case 4:
+     estadoIntruso();
+    break;
+
+    case 5:
+     estadoFuego();
+    break;
+  }
 }
 
 
 //---Fuciones de salida para los estados---
+//---Estado Desarme---
+void estadoDesarme(){
+  tiempoActual = millis ();
+  desarme:
+  serial.print(0);
+  cerradura.write(abierta);
+  tempPass = "";
+  i=6;
+  humo=0;
+  while(!passVerificada){
+   lcd.setCursor(0,0);
+   lcd.print("SistemaDesarmado");
+   lcd.setCursor(0,1);
+   lcd.print("PASS>>");
+   teclaPresionada = teclado.getKey(); //va a leer las teclas que se precionen
+    if(teclaPresionada != NO_KEY){ //para que no guarde espacios en blanco mentras no se precionan teclas
+     if(teclaPresionada==0 || teclaPresionada==1 || teclaPresionada==2 || teclaPresionada==3 || teclaPresionada==4 ||
+        teclaPresionada==5 || teclaPresionada==6 || teclaPresionada==7 || teclaPresionada==8 || teclaPresionada==9 ||
+        teclaPresionada==A || teclaPresionada==B || teclaPresionada==C)
+     {
+       //este ciclo tiene dos funciones "pedir" la password y poner * en lugar de los caracteres para mentener la password escondida 
+       tempPass += teclaPresionada;
+       lcd.setCursor(i,1);
+       lcd.print("*");
+       i++;
+       tone(buzzer2,800,200);
+     }
+     else if(teclaPresionada == "#"){ //cancelar la opracion
+      break;
+     }
+     else if(teclapresionada == "*"){//verificar la pasword
+      if(password == tempPass){
+       tiempoAnterior = tiempoActual;
+       if(tiempoActual - tiempoAnterior <= tiempoEspera){
+        lcd.clear();
+        lcd.setCursor(0,0);
+        lcd.print("Sistema Armado");
+        lcd.setCursor(0,1);
+        lcd.print("----------------");
+        sonidoEspera();
+       }
+       else{
+        estado = 1 // pasa a estado armado         
+       }
+      }
+      else if(modNoche == tempPass){
+       tiempoAnterior = tiempoActual;
+       if(tiempoActual - tiempoAnterior <= tiempoEspera){
+        lcd.clear();
+        lcd.setCursor(0,0);
+        lcd.print("Modo Nocturno");
+        lcd.setCursor(0,1);
+        lcd.print("----------------");
+        sonidoEspera();
+       }
+       else{
+        estado = 2  // pasa estado noche          
+       }  
+      }
+      else if(temPass=="A"){
+       estado = 3; //cambio de pass
+      }
+      else if(temPass=="B"){
+       estado = 4; //pasa estado intruso
+      }
+      else if(temPass=="C"){
+       estado = 5; //pasa estado incendio 
+      }
+      else{
+       tempPass="";
+       tone(buzzer2,500,500);
+       goto desarme;          
+      }
+     }
+    }
+   }
+}
 
 //---Estado Noche---
 void estadoNoche (){
@@ -91,8 +230,9 @@ void estadoNoche (){
   lcd.print("PASS>>");
   teclaPresionada = teclado.getKey(); //va a leer las teclas que se precionen
     if(teclaPresionada != NO_KEY){ //para que no guarde espacios en blanco mentras no se precionan teclas
-      if(teclaPresionada==0 || teclaPresionada==1 || teclaPresionada==2 || teclaPresionada==3 || teclaPresionada==4 ||
-         teclaPresionada==5 || teclaPresionada==6 || teclaPresionada==7 || teclaPresionada==8 || teclaPresionada==9 )
+     if(teclaPresionada==0 || teclaPresionada==1 || teclaPresionada==2 || teclaPresionada==3 || teclaPresionada==4 ||
+         teclaPresionada==5 || teclaPresionada==6 || teclaPresionada==7 || teclaPresionada==8 || teclaPresionada==9 ||
+         teclaPresionada==B || teclaPresionada==C)
       {
         //este ciclo tiene dos funciones "pedir" la password y poner * en lugar de los caracteres para mentener la password escondida 
        tempPass += teclaPresionada;
