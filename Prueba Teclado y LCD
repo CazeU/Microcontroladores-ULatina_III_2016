@@ -1,0 +1,43 @@
+#include <Keypad.h>
+#include <LiquidCrystal.h>
+LiquidCrystal lcd(14,15,16,17,18,19);
+//Configurando Keypad
+const byte numFilas = 4; //numero de filas en el teclado
+const byte numColum = 4; //numero de columnas en el teclado
+char teclaPresionada;
+char keys[numFilas][numColum]=  //Configurando el contenido del teclado
+{
+  {'1', '2', '3', 'A'},
+  {'4', '5', '6', 'B'},
+  {'7', '8', '9', 'C'},
+  {'*', '0', '#', 'D'}
+};
+
+//codigo para conectar el teclado con los pines de Arduino
+byte pinsFil[numFilas] = {A15,A14,A13,A12};
+byte pinsCol[numColum] = {A11,A10,A9,A8};
+Keypad teclado = Keypad(makeKeymap(keys), pinsFil, pinsCol, numFilas, numColum); 
+int buzzer2=12;
+int i = 6;
+String tempPass = "";
+void setup() {
+  lcd.begin(16,2);
+  lcd.clear();
+  Serial.begin(9600);
+}
+
+void loop() {
+  lcd.setCursor(0,0);
+  lcd.print("SistemaDesarmado");
+  lcd.setCursor(0,1);
+  lcd.print("PASS>>");
+  teclaPresionada = teclado.getKey();
+  if(teclaPresionada != NO_KEY){
+   tempPass += teclaPresionada;
+    lcd.setCursor(i,1);
+    lcd.print("*");
+    i++;
+    tone(buzzer2,800,100);
+  }
+  Serial.println(tempPass);
+}
