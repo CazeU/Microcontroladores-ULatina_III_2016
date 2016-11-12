@@ -1,0 +1,418 @@
+#include <Keypad.h>
+#include <LiquidCrystal.h>
+
+//Configurando Keypad
+const byte numFilas = 4; //numero de filas en el teclado
+const byte numColum = 4; //numero de columnas en el teclado
+char teclaPresionada;
+char keys[numFilas][numColum]=  //Configurando el contenido del teclado
+{
+  {'1', '2', '3', 'A'},
+  {'4', '5', '6', 'B'},
+  {'7', '8', '9', 'C'},
+  {'*', '0', '#', 'D'}
+};
+
+//codigo para conectar el teclado con los pines de Arduino
+byte pinsFil[numFilas] = {A15,A14,A13,A12};
+byte pinsCol[numColum] = {A11,A10,A9,A8};
+Keypad teclado = Keypad(makeKeymap(keys), pinsFil, pinsCol, numFilas, numColum); 
+
+
+//Configurando LCD
+LiquidCrystal lcd(14,15,16,17,18,19);
+
+//Definiendo pines de los sensores y actuadores
+const int buzzer1 = 11; //buzzer para las alarmas
+const int buzzer2 = 12; //buzzer para el panel de control
+
+//Otras Variables y Constantes 
+unsigned long tiempoActual = 0;
+unsigned long tiempoAnterior = 0;
+unsigned long esperaActual=0;
+unsigned long esperaAnterior=0;
+const int tiempoEspera = 15000;
+String password = "2580"; //Master pass por defecto.
+String modNoche = "1234"; //Pass para activar modo nocturno
+String tempPass = "";
+String dblCheck = "";
+int estado = 0; //0: desarme, 1: espera, 2: armado, 3: noche, 4: intruso, 5: fuego, 6: solicitudCambio, 7: cambioPass, 8:DobleCheck,
+int i = 6; //Contador para arreglos
+
+
+void setup() {
+ Serial.begin(9600); //para efectos de la raspi 0: desarme, 1:Fuego, 2:Intruso
+ lcd.begin(16,2);
+ lcd.clear();
+
+}
+
+void loop() {
+    Serial.print(estado);
+    Serial.print(" / ");
+    Serial.print(tempPass);
+    Serial.print(" / ");
+    Serial.println(i);
+  switch (estado){
+    case 0:
+    estadoDesarmado();
+    break;
+    
+    case 1:
+    funcionEspera();
+    break;
+
+    case 2:
+    estadoArmado();
+    break;
+    
+    case 3:
+    estadoNoche();
+    break;
+    
+    case 6:
+    solicitudCambio();
+    break;
+
+    case 7:
+    estadoCambio();
+    break;
+
+    case 8:
+    dobleCheck();
+    break;
+    
+  }
+}
+
+
+//---Funcion para Digitar claves y armar el sistema---
+void estadoDesarmado(){
+  lcd.setCursor(0,0);
+  lcd.print("SistemaDesarmado");
+  lcd.setCursor(0,1);
+  lcd.print("PASS>>");
+  teclaPresionada = teclado.getKey();
+  if(teclaPresionada!=NO_KEY){
+    if(teclaPresionada=='1'||teclaPresionada=='2'||teclaPresionada=='3'||teclaPresionada=='4'||teclaPresionada=='5'||
+       teclaPresionada=='6'||teclaPresionada=='7'||teclaPresionada=='8'||teclaPresionada=='9'||teclaPresionada=='0'){
+     tempPass += teclaPresionada;
+     lcd.setCursor(i,1);
+     lcd.print("*");
+     i++;
+     tone(buzzer2,1500,100);
+    }
+    else if(teclaPresionada=='*'){
+     if(tempPass==password || tempPass==modNoche){
+      lcd.clear();
+      esperaAnterior = millis();
+      estado = 1; 
+     }
+     else{
+      lcd.clear();
+      i=6;
+      tempPass="";
+      tone(buzzer2,500,500);
+     }
+    }
+    else if (teclaPresionada=='#'){
+     lcd.clear();
+     i=6;
+     tempPass="";
+     tone(buzzer2,500,500); 
+    }
+    else if (teclaPresionada =='A'){
+     lcd.clear();
+     i=6;
+     tempPass="";
+     estado = 6;
+     tone(buzzer2,1000,500);
+    }
+  }
+}
+
+//---Funcion para Digitar claves y desarmar el sistema---
+void estadoArmado(){
+  lcd.setCursor(0,0);
+  lcd.print("Sistema Armado");
+  lcd.setCursor(0,1);
+  lcd.print("PASS>>");
+  teclaPresionada = teclado.getKey();
+  if(teclaPresionada!=NO_KEY){
+    if(teclaPresionada=='1'||teclaPresionada=='2'||teclaPresionada=='3'||teclaPresionada=='4'||teclaPresionada=='5'||
+       teclaPresionada=='6'||teclaPresionada=='7'||teclaPresionada=='8'||teclaPresionada=='9'||teclaPresionada=='0'){
+     tempPass += teclaPresionada;
+     lcd.setCursor(i,1);
+     lcd.print("*");
+     i++;
+     tone(buzzer2,1500,100);
+    }
+    else if(teclaPresionada=='*'){
+     if(tempPass==password){
+      tempPass=""; //OJO QUE AQUI SE ESTA RESETEANDO LA PASS
+      i=6;
+      lcd.clear();
+      tone(buzzer2,2000,800);
+      estado = 0; 
+     }
+     else{
+      lcd.clear();
+      i=6;
+      tempPass="";
+      tone(buzzer2,500,500);
+     }
+    }
+    else if (teclaPresionada=='#'){
+     lcd.clear();
+     i=6;
+     tempPass="";
+     tone(buzzer2,500,500); 
+    }
+  }
+}
+
+//--Funcion para digitar claves y desactivar el modo nocturno---
+void estadoNoche(){
+  lcd.setCursor(0,0);
+  lcd.print("Modo Nocturno");
+  lcd.setCursor(0,1);
+  lcd.print("PASS>>");
+  teclaPresionada = teclado.getKey();
+  if(teclaPresionada!=NO_KEY){
+    if(teclaPresionada=='1'||teclaPresionada=='2'||teclaPresionada=='3'||teclaPresionada=='4'||teclaPresionada=='5'||
+       teclaPresionada=='6'||teclaPresionada=='7'||teclaPresionada=='8'||teclaPresionada=='9'||teclaPresionada=='0'){
+     tempPass += teclaPresionada;
+     lcd.setCursor(i,1);
+     lcd.print("*");
+     i++;
+     tone(buzzer2,1500,100);
+    }
+    else if(teclaPresionada=='*'){
+     if(tempPass==password){
+      tempPass=""; //OJO QUE AQUI SE ESTA RESETEANDO LA PASS
+      i=6;
+      lcd.clear();
+      tone(buzzer2,2000,800);
+      estado = 0; 
+     }
+     else{
+      lcd.clear();
+      i=6;
+      tempPass="";
+      tone(buzzer2,500,500);
+     }
+    }
+    else if (teclaPresionada=='#'){
+     lcd.clear();
+     i=6;
+     tempPass="";
+     tone(buzzer2,500,500); 
+    }
+  }
+}
+
+void solicitudCambio(){
+  lcd.setCursor(0,0);
+  lcd.print("Ingrese Password");
+  lcd.setCursor(0,1);
+  lcd.print("PASS>>");
+  teclaPresionada = teclado.getKey();
+  if(teclaPresionada!=NO_KEY){
+    if(teclaPresionada=='1'||teclaPresionada=='2'||teclaPresionada=='3'||teclaPresionada=='4'||teclaPresionada=='5'||
+       teclaPresionada=='6'||teclaPresionada=='7'||teclaPresionada=='8'||teclaPresionada=='9'||teclaPresionada=='0'){
+     tempPass += teclaPresionada;
+     lcd.setCursor(i,1);
+     lcd.print("*");
+     i++;
+     tone(buzzer2,1500,100);
+    }
+    else if(teclaPresionada=='*'){
+     if(tempPass==password){
+      tempPass=""; //OJO QUE AQUI SE ESTA RESETEANDO LA PASS
+      i=6;
+      lcd.clear();
+      tone(buzzer2,2000,800);
+      estado = 7; 
+     }
+     else{
+      lcd.clear();
+      i=6;
+      tempPass="";
+      tone(buzzer2,500,500);
+      estado = 0;
+     }
+    }
+    else if (teclaPresionada=='#'){
+     lcd.clear();
+     i=6;
+     tempPass="";
+     tone(buzzer2,500,500);
+     estado = 0; 
+    }
+  }
+}
+
+
+
+
+void estadoCambio(){
+  lcd.setCursor(0,0);
+  lcd.print("Nuevo Password");
+  lcd.setCursor(0,1);
+  lcd.print("PASS>>");
+  teclaPresionada = teclado.getKey();
+  if(teclaPresionada!=NO_KEY){
+    if(teclaPresionada=='1'||teclaPresionada=='2'||teclaPresionada=='3'||teclaPresionada=='4'||teclaPresionada=='5'||
+       teclaPresionada=='6'||teclaPresionada=='7'||teclaPresionada=='8'||teclaPresionada=='9'||teclaPresionada=='0'){
+     tempPass += teclaPresionada;
+     lcd.setCursor(i,1);
+     lcd.print("*");
+     i++;
+     tone(buzzer2,1500,100);
+    }
+    else if(teclaPresionada=='*'){
+      lcd.clear();
+      i=6;
+      dblCheck = tempPass;
+      estado = 8;
+      tempPass=""; //OJO QUE AQUI SE ESTA RESETEANDO LA PASS
+      tone(buzzer2,2000,800);
+     }
+    else if (teclaPresionada=='#'){
+     lcd.clear();
+     i=6;
+     tempPass="";
+     tone(buzzer2,500,500);
+     estado = 0; 
+    }
+  }
+}
+  
+void dobleCheck(){
+  lcd.setCursor(0,0);
+  lcd.print("Repetir Password");
+  lcd.setCursor(0,1);
+  lcd.print("PASS>>");
+  teclaPresionada = teclado.getKey();
+  if(teclaPresionada!=NO_KEY){
+    if(teclaPresionada=='1'||teclaPresionada=='2'||teclaPresionada=='3'||teclaPresionada=='4'||teclaPresionada=='5'||
+       teclaPresionada=='6'||teclaPresionada=='7'||teclaPresionada=='8'||teclaPresionada=='9'||teclaPresionada=='0'){
+     tempPass += teclaPresionada;
+     lcd.setCursor(i,1);
+     lcd.print("*");
+     i++;
+     tone(buzzer2,1500,100);
+    }
+    else if(teclaPresionada=='*'){
+     if(tempPass==dblCheck){
+      password=dblCheck; //OJO CAMBIO DE PASSWORD
+      tempPass=""; //OJO QUE AQUI SE ESTA RESETEANDO LA PASS
+      dblCheck="";
+      i=6;
+      lcd.clear();
+      tone(buzzer2,2000,800);
+      estado = 0; 
+     }
+     else{
+      lcd.clear();
+      i=6;
+      tempPass="";
+      dblCheck="";
+      tone(buzzer2,500,500);
+      estado = 0;
+     }
+    }
+    else if (teclaPresionada=='#'){
+     lcd.clear();
+     i=6;
+     tempPass="";
+     dblCheck="";
+     tone(buzzer2,500,500);
+     estado = 0;
+    }
+  }
+}
+
+//---Funcion que genera el tiempo de espera antes de armar el sistema---
+void funcionEspera(){
+  esperaActual = millis();
+ if(esperaActual- esperaAnterior <= tiempoEspera){
+  lcd.setCursor(0,0);
+  lcd.print("Armando Sistema");
+  lcd.setCursor(0,1);
+  lcd.print("15 segundos");
+  sonidoEspera();  
+ }
+ else{
+  if(tempPass==password){
+   tempPass=""; //OJO QUE AQUI SE ESTA RESETEANDO LA PASS Depende de que haga el estado, en este caso es xq solo hay un estado intermedio
+   i=6;
+   lcd.clear();
+   noTone(11);
+   noTone(12);
+   estado = 2; //va para estado armado
+  }
+  else if(tempPass==modNoche){
+   tempPass="";
+   i=6;
+   lcd.clear();
+   noTone(11);
+   noTone(12);
+   estado = 3; //va para estado noche
+  }
+ }
+}
+
+
+//-----------Funciones de Sonido-----------
+//------------Sonido de Espera------------ 
+unsigned long  SE_tiempoAnterior = 0;
+void sonidoEspera(){
+  unsigned long SE_tiempoActual = millis();
+  if(SE_tiempoActual - SE_tiempoAnterior <= 100){
+    tone(buzzer1, 2000);
+  }
+  else{
+    noTone(buzzer1);
+    if(SE_tiempoActual - SE_tiempoAnterior >= 200){
+      SE_tiempoAnterior = SE_tiempoActual;
+    }
+  } 
+}
+
+
+//------------Sonido de Alarma de Intruso------------
+unsigned long  SI_tiempoAnterior = 0;
+void sonidoIntruso(){
+  unsigned long SI_tiempoActual = millis();
+  if(SI_tiempoActual - SI_tiempoAnterior <= 1000){
+    tone(buzzer1, 2000);
+  }
+  else{
+    noTone(buzzer1);
+    if(SI_tiempoActual - SI_tiempoAnterior >= 1300){
+      SI_tiempoAnterior = SI_tiempoActual;
+    }
+  }
+}
+
+
+//------------Sonido de Alarma de Incendio------------
+unsigned long  SF_tiempoAnterior = 0;
+void sonidoFuego(){
+  unsigned long SF_tiempoActual = millis();
+  if(SF_tiempoActual - SF_tiempoAnterior <= 500){
+    tone(buzzer1, 1000);
+  }
+  else{
+    if(SF_tiempoActual - SF_tiempoAnterior >= 500 && SF_tiempoActual - SF_tiempoAnterior <= 1000){
+    tone(buzzer1, 2000);
+    }
+    else{
+      noTone(buzzer1);
+      if(SF_tiempoActual - SF_tiempoAnterior > 1500){
+         SF_tiempoAnterior = SF_tiempoActual;
+      }    
+    } 
+  }
+}
