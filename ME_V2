@@ -125,25 +125,18 @@ void estadoDesarmado(){
   lcd.print("PASS>>");
   teclaPresionada = teclado.getKey();
   if(teclaPresionada!=NO_KEY){
-    if(teclaPresionada=='1'||teclaPresionada=='2'||teclaPresionada=='3'||teclaPresionada=='4'||teclaPresionada=='5'||
-       teclaPresionada=='6'||teclaPresionada=='7'||teclaPresionada=='8'||teclaPresionada=='9'||teclaPresionada=='0'){
-     tempPass += teclaPresionada;
-     lcd.setCursor(i,1);
-     lcd.print("*");
-     i++;
-     tone(buzzer2,1500,100);
-    }
-    else if(teclaPresionada=='*'){
-     if(tempPass==password || tempPass==modNoche){
-      lcd.clear();
-      esperaAnterior = millis();
-      estado = 1; //va para Espera
-     }
-     else{
-      lcd.clear();
-      i=6;
-      tempPass="";
-      tone(buzzer2,500,500);
+   lecturaNumerica();
+    if(teclaPresionada=='*'){
+      if(tempPass==password || tempPass==modNoche){
+        lcd.clear();
+        esperaAnterior = millis();
+        estado = 1; //va para Espera
+        }
+      else{
+        lcd.clear();
+        i=6;
+        tempPass="";
+        tone(buzzer2,500,500);
      }
     }
     else if (teclaPresionada=='#'){
@@ -174,7 +167,6 @@ void estadoDesarmado(){
   }
 }
 
-
 //---Funciones para Digitar claves y desarmar el sistema---
 
 //---Funcion de sistema Armado---
@@ -186,15 +178,8 @@ void estadoArmado(){
   lcd.print("PASS>>");
   teclaPresionada = teclado.getKey();
   if(teclaPresionada!=NO_KEY){
-    if(teclaPresionada=='1'||teclaPresionada=='2'||teclaPresionada=='3'||teclaPresionada=='4'||teclaPresionada=='5'||
-       teclaPresionada=='6'||teclaPresionada=='7'||teclaPresionada=='8'||teclaPresionada=='9'||teclaPresionada=='0'){
-     tempPass += teclaPresionada;
-     lcd.setCursor(i,1);
-     lcd.print("*");
-     i++;
-     tone(buzzer2,1500,100);
-    }
-    else if(teclaPresionada=='*'){
+    lecturaNumerica();
+    if(teclaPresionada=='*'){
      if(tempPass==password){
       tempPass=""; //OJO QUE AQUI SE ESTA RESETEANDO LA PASS
       i=6;
@@ -241,6 +226,7 @@ void estadoArmado(){
     tempPass="";
     estado = 5; //Va para Fuego
   }
+  
 }
 
 //--Funcion del modo nocturno---
@@ -252,15 +238,8 @@ void estadoNoche(){
   lcd.print("PASS>>");
   teclaPresionada = teclado.getKey();
   if(teclaPresionada!=NO_KEY){
-    if(teclaPresionada=='1'||teclaPresionada=='2'||teclaPresionada=='3'||teclaPresionada=='4'||teclaPresionada=='5'||
-       teclaPresionada=='6'||teclaPresionada=='7'||teclaPresionada=='8'||teclaPresionada=='9'||teclaPresionada=='0'){
-     tempPass += teclaPresionada;
-     lcd.setCursor(i,1);
-     lcd.print("*");
-     i++;
-     tone(buzzer2,1500,100);
-    }
-    else if(teclaPresionada=='*'){
+    lecturaNumerica();
+    if(teclaPresionada=='*'){
      if(tempPass==password){
       tempPass=""; //OJO QUE AQUI SE ESTA RESETEANDO LA PASS
       i=6;
@@ -307,7 +286,7 @@ void estadoNoche(){
     tempPass="";
     estado = 5; //Va para Fuego
   }
-}
+ }
 
 
 //---Funciones para la secuencia de cambio de Password---
@@ -318,15 +297,8 @@ void solicitudCambio(){
   lcd.print("PASS>>");
   teclaPresionada = teclado.getKey();
   if(teclaPresionada!=NO_KEY){
-    if(teclaPresionada=='1'||teclaPresionada=='2'||teclaPresionada=='3'||teclaPresionada=='4'||teclaPresionada=='5'||
-       teclaPresionada=='6'||teclaPresionada=='7'||teclaPresionada=='8'||teclaPresionada=='9'||teclaPresionada=='0'){
-     tempPass += teclaPresionada;
-     lcd.setCursor(i,1);
-     lcd.print("*");
-     i++;
-     tone(buzzer2,1500,100);
-    }
-    else if(teclaPresionada=='*'){
+    lecturaNumerica();
+    if(teclaPresionada=='*'){
      if(tempPass==password){
       tempPass=""; //OJO QUE AQUI SE ESTA RESETEANDO LA PASS
       i=6;
@@ -359,15 +331,8 @@ void estadoCambio(){
   lcd.print("PASS>>");
   teclaPresionada = teclado.getKey();
   if(teclaPresionada!=NO_KEY){
-    if(teclaPresionada=='1'||teclaPresionada=='2'||teclaPresionada=='3'||teclaPresionada=='4'||teclaPresionada=='5'||
-       teclaPresionada=='6'||teclaPresionada=='7'||teclaPresionada=='8'||teclaPresionada=='9'||teclaPresionada=='0'){
-     tempPass += teclaPresionada;
-     lcd.setCursor(i,1);
-     lcd.print("*");
-     i++;
-     tone(buzzer2,1500,100);
-    }
-    else if(teclaPresionada=='*'){
+   lecturaNumerica();
+    if(teclaPresionada=='*'){
       lcd.clear();
       i=6;
       dblCheck = tempPass;
@@ -392,15 +357,8 @@ void dobleCheck(){
   lcd.print("PASS>>");
   teclaPresionada = teclado.getKey();
   if(teclaPresionada!=NO_KEY){
-    if(teclaPresionada=='1'||teclaPresionada=='2'||teclaPresionada=='3'||teclaPresionada=='4'||teclaPresionada=='5'||
-       teclaPresionada=='6'||teclaPresionada=='7'||teclaPresionada=='8'||teclaPresionada=='9'||teclaPresionada=='0'){
-     tempPass += teclaPresionada;
-     lcd.setCursor(i,1);
-     lcd.print("*");
-     i++;
-     tone(buzzer2,1500,100);
-    }
-    else if(teclaPresionada=='*'){
+    lecturaNumerica();
+    if(teclaPresionada=='*'){
      if(tempPass==dblCheck){
       password=dblCheck; //OJO CAMBIO DE PASWORD
       tempPass=""; //OJO QUE AQUI SE ESTA RESETEANDO LA PASS
@@ -430,7 +388,6 @@ void dobleCheck(){
   }
 }
 
-
 //---Funciones de Alarma---
 void estadoIntruso(){
   sonidoIntruso();
@@ -441,15 +398,8 @@ void estadoIntruso(){
   lcd.print("PASS>>");
   teclaPresionada = teclado.getKey();
   if(teclaPresionada!=NO_KEY){
-    if(teclaPresionada=='1'||teclaPresionada=='2'||teclaPresionada=='3'||teclaPresionada=='4'||teclaPresionada=='5'||
-       teclaPresionada=='6'||teclaPresionada=='7'||teclaPresionada=='8'||teclaPresionada=='9'||teclaPresionada=='0'){
-     tempPass += teclaPresionada;
-     lcd.setCursor(i,1);
-     lcd.print("*");
-     i++;
-     tone(buzzer2,1500,100);
-    }
-    else if(teclaPresionada=='*'){
+    lecturaNumerica;
+    if(teclaPresionada=='*'){
      if(tempPass==password){
       tempPass=""; //OJO QUE AQUI SE ESTA RESETEANDO LA PASS
       i=6;
@@ -483,15 +433,8 @@ void estadoFuego(){
   lcd.print("PASS>>");
   teclaPresionada = teclado.getKey();
   if(teclaPresionada!=NO_KEY){
-    if(teclaPresionada=='1'||teclaPresionada=='2'||teclaPresionada=='3'||teclaPresionada=='4'||teclaPresionada=='5'||
-       teclaPresionada=='6'||teclaPresionada=='7'||teclaPresionada=='8'||teclaPresionada=='9'||teclaPresionada=='0'){
-     tempPass += teclaPresionada;
-     lcd.setCursor(i,1);
-     lcd.print("*");
-     i++;
-     tone(buzzer2,1500,100);
-    }
-    else if(teclaPresionada=='*'){
+   lecturaNumerica();
+    if(teclaPresionada=='*'){
      if(tempPass==password){
       tempPass=""; //OJO QUE AQUI SE ESTA RESETEANDO LA PASS
       i=6;
@@ -559,15 +502,8 @@ void funcionEspera2(){
   lcd.print("PASS>>");
   sonidoEspera();
   if(teclaPresionada!=NO_KEY){
-    if(teclaPresionada=='1'||teclaPresionada=='2'||teclaPresionada=='3'||teclaPresionada=='4'||teclaPresionada=='5'||
-       teclaPresionada=='6'||teclaPresionada=='7'||teclaPresionada=='8'||teclaPresionada=='9'||teclaPresionada=='0'){
-     tempPass += teclaPresionada;
-     lcd.setCursor(i,1);
-     lcd.print("*");
-     i++;
-     tone(buzzer2,1500,100);
-    }
-    else if(teclaPresionada=='*'){
+    lecturaNumerica();
+    if(teclaPresionada=='*'){
      if(tempPass==password){
       tempPass=""; //OJO QUE AQUI SE ESTA RESETEANDO LA PASS
       i=6;
@@ -589,9 +525,9 @@ void funcionEspera2(){
      tempPass=""; //OJO QUE AQUI SE ESTA RESETEANDO LA PASS
      tone(buzzer2,500,500); 
     }
-  }  
- }
- else{
+  }
+ }  
+  else{
   if(tempPass==password){
    tempPass=""; //OJO QUE AQUI SE ESTA RESETEANDO LA PASS
    i=6;
@@ -660,7 +596,23 @@ void sonidoFuego(){
       noTone(buzzer1);
       if(SF_tiempoActual - SF_tiempoAnterior > 1500){
          SF_tiempoAnterior = SF_tiempoActual;
-      }    
+       }    
     } 
   }
 }
+
+//-----------Función de lectura numérica-------------
+
+void lecturaNumerica(){
+
+  if(teclaPresionada=='1'||teclaPresionada=='2'||teclaPresionada=='3'||teclaPresionada=='4'||teclaPresionada=='5'||
+       teclaPresionada=='6'||teclaPresionada=='7'||teclaPresionada=='8'||teclaPresionada=='9'||teclaPresionada=='0'){
+     tempPass += teclaPresionada;
+     lcd.setCursor(i,1);
+     lcd.print("*");
+     i++;
+     tone(buzzer2,1500,100);
+     }
+}
+
+
