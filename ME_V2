@@ -1,5 +1,6 @@
 #include <Keypad.h>
 #include <LiquidCrystal.h>
+#include <Servo.h>
 
 //Configurando Keypad
 const byte numFilas = 4; //numero de filas en el teclado
@@ -22,29 +23,46 @@ Keypad teclado = Keypad(makeKeymap(keys), pinsFil, pinsCol, numFilas, numColum);
 //Configurando LCD
 LiquidCrystal lcd(14,15,16,17,18,19);
 
+//Configurando Servo
+Servo cerradura;
+const int abierta = 90; //posicion del servo que abre la cerradura
+const int cerrada = 0;  //posicion del servo que cierra la cerradura
+
 //Definiendo pines de los sensores y actuadores
+const int pir = A0; //sensor de movimiento
+const int redSwitch = A1; //hace falta el sensor magnetico para puertas y ventanas
+const int temp = A2; //sensor de temperatura
+const int sensorHumo = A3; //sensor de humo 
 const int buzzer1 = 11; //buzzer para las alarmas
 const int buzzer2 = 12; //buzzer para el panel de control
 
-//Otras Variables y Constantes 
-unsigned long tiempoActual = 0;
-unsigned long tiempoAnterior = 0;
+//Variables de tiempo:
 unsigned long esperaActual=0;
 unsigned long esperaAnterior=0;
+unsigned long esperaActual2=0;
+unsigned long esperaAnterior2=0;
 const int tiempoEspera = 15000;
+
+//Variables para las Password:
 String password = "2580"; //Master pass por defecto.
-String modNoche = "1234"; //Pass para activar modo nocturno
+String modNoche = "147"; //Pass para activar modo nocturno
 String tempPass = "";
 String dblCheck = "";
+
+//Otras Variables y Constantes:
 int estado = 0; //0: desarme, 1: espera, 2: armado, 3: noche, 4: intruso, 5: fuego, 6: solicitudCambio, 7: cambioPass, 8:DobleCheck,
 int i = 6; //Contador para arreglos
+const int limiteHumo = 350;
 
 
 void setup() {
  Serial.begin(9600); //para efectos de la raspi 0: desarme, 1:Fuego, 2:Intruso
  lcd.begin(16,2);
  lcd.clear();
-
+ cerradura.attach(2);
+ pinMode(pir, INPUT);
+ pinMode(redSwitch,INPUT_PULLUP); //OJO LOGICA INVERTIDA 
+ pinMode(temp, INPUT); 
 }
 
 void loop() {
@@ -54,32 +72,44 @@ void loop() {
     Serial.print(" / ");
     Serial.println(i);
   switch (estado){
-    case 0:
+    case 0: //Desarme
     estadoDesarmado();
     break;
     
-    case 1:
+    case 1: //Espera
     funcionEspera();
     break;
 
-    case 2:
+    case 2: //Armado
     estadoArmado();
     break;
     
-    case 3:
+    case 3: //Noche
     estadoNoche();
     break;
+
+    case 4: //Intruso
+    estadoIntruso();
+    break;
+
+    case 5: //Fuego
+    estadoFuego();
+    break;
     
-    case 6:
+    case 6: // Solicitud de Cambio de Pass
     solicitudCambio();
     break;
 
-    case 7:
+    case 7: //Cambio de Pass
     estadoCambio();
     break;
 
-    case 8:
+    case 8: //Doble Check para cambiar Pass
     dobleCheck();
+    break;
+
+    case 9: //Espera 2
+    funcionEspera2();
     break;
     
   }
@@ -88,6 +118,7 @@ void loop() {
 
 //---Funcion para Digitar claves y armar el sistema---
 void estadoDesarmado(){
+  cerradura.write(abierta);
   lcd.setCursor(0,0);
   lcd.print("SistemaDesarmado");
   lcd.setCursor(0,1);
@@ -106,7 +137,7 @@ void estadoDesarmado(){
      if(tempPass==password || tempPass==modNoche){
       lcd.clear();
       esperaAnterior = millis();
-      estado = 1; 
+      estado = 1; //va para Espera
      }
      else{
       lcd.clear();
@@ -125,14 +156,30 @@ void estadoDesarmado(){
      lcd.clear();
      i=6;
      tempPass="";
-     estado = 6;
+     estado = 6; //Va para Solicitud de Cambio de Pass
      tone(buzzer2,1000,500);
+    }
+    else if(teclaPresionada =='C'){
+     lcd.clear();
+     i=6;
+     tempPass="";
+     estado = 4; //Va para Intruso
+    }
+    else if(teclaPresionada =='D'){
+     lcd.clear();
+     i=6;
+     tempPass="";
+     estado = 5; //Va para Fuego
     }
   }
 }
 
-//---Funcion para Digitar claves y desarmar el sistema---
+
+//---Funciones para Digitar claves y desarmar el sistema---
+
+//---Funcion de sistema Armado---
 void estadoArmado(){
+  cerradura.write(cerrada);
   lcd.setCursor(0,0);
   lcd.print("Sistema Armado");
   lcd.setCursor(0,1);
@@ -153,7 +200,7 @@ void estadoArmado(){
       i=6;
       lcd.clear();
       tone(buzzer2,2000,800);
-      estado = 0; 
+      estado = 0; //Va para Desarme
      }
      else{
       lcd.clear();
@@ -168,11 +215,37 @@ void estadoArmado(){
      tempPass="";
      tone(buzzer2,500,500); 
     }
+    else if(teclaPresionada =='C'){
+     lcd.clear();
+     i=6;
+     tempPass="";
+     estado = 4; //Va para Intruso
+    }
+    else if(teclaPresionada =='D'){
+     lcd.clear();
+     i=6;
+     tempPass="";
+     estado = 5; //Va para Fuego
+    }
+  }
+  if(digitalRead(pir)||digitalRead(redSwitch)){ //OJO recordar que el redswitch tiene logica inertida por el INPUT_PULLUP
+    lcd.clear();
+    i=6;
+    tempPass="";
+    esperaAnterior2 = millis();
+    estado = 9; //Va para Espera2
+  }
+  if(digitalRead(temp)||(analogRead(sensorHumo)>limiteHumo)){
+    lcd.clear();
+    i=6;
+    tempPass="";
+    estado = 5; //Va para Fuego
   }
 }
 
-//--Funcion para digitar claves y desactivar el modo nocturno---
+//--Funcion del modo nocturno---
 void estadoNoche(){
+  cerradura.write(cerrada);
   lcd.setCursor(0,0);
   lcd.print("Modo Nocturno");
   lcd.setCursor(0,1);
@@ -193,7 +266,7 @@ void estadoNoche(){
       i=6;
       lcd.clear();
       tone(buzzer2,2000,800);
-      estado = 0; 
+      estado = 0; //Va para Desarme
      }
      else{
       lcd.clear();
@@ -208,9 +281,36 @@ void estadoNoche(){
      tempPass="";
      tone(buzzer2,500,500); 
     }
+    else if(teclaPresionada =='C'){
+     lcd.clear();
+     i=6;
+     tempPass="";
+     estado = 4; //Va para Intruso
+    }
+    else if(teclaPresionada =='D'){
+     lcd.clear();
+     i=6;
+     tempPass="";
+     estado = 5; //Va para Fuego
+    }
+  }
+  if(digitalRead(redSwitch)){
+    lcd.clear();
+    i=6;
+    tempPass="";
+    esperaAnterior2 = millis();
+    estado = 9; //Va para Espera 2
+  }
+  if(digitalRead(temp)||(analogRead(sensorHumo)>limiteHumo)){
+    lcd.clear();
+    i=6;
+    tempPass="";
+    estado = 5; //Va para Fuego
   }
 }
 
+
+//---Funciones para la secuencia de cambio de Password---
 void solicitudCambio(){
   lcd.setCursor(0,0);
   lcd.print("Ingrese Password");
@@ -232,14 +332,14 @@ void solicitudCambio(){
       i=6;
       lcd.clear();
       tone(buzzer2,2000,800);
-      estado = 7; 
+      estado = 7; //Va para cambioPass
      }
      else{
       lcd.clear();
       i=6;
       tempPass="";
       tone(buzzer2,500,500);
-      estado = 0;
+      estado = 0; //Va para Desarme
      }
     }
     else if (teclaPresionada=='#'){
@@ -247,13 +347,10 @@ void solicitudCambio(){
      i=6;
      tempPass="";
      tone(buzzer2,500,500);
-     estado = 0; 
+     estado = 0; //Va para Desarme
     }
   }
 }
-
-
-
 
 void estadoCambio(){
   lcd.setCursor(0,0);
@@ -274,16 +371,16 @@ void estadoCambio(){
       lcd.clear();
       i=6;
       dblCheck = tempPass;
-      estado = 8;
+      estado = 8; //Va para DobleCheck
       tempPass=""; //OJO QUE AQUI SE ESTA RESETEANDO LA PASS
       tone(buzzer2,2000,800);
      }
     else if (teclaPresionada=='#'){
      lcd.clear();
      i=6;
-     tempPass="";
+     tempPass=""; //OJO QUE AQUI SE ESTA RESETEANDO LA PASS
      tone(buzzer2,500,500);
-     estado = 0; 
+     estado = 0;  // Va para Desarme
     }
   }
 }
@@ -305,13 +402,13 @@ void dobleCheck(){
     }
     else if(teclaPresionada=='*'){
      if(tempPass==dblCheck){
-      password=dblCheck; //OJO CAMBIO DE PASSWORD
+      password=dblCheck; //OJO CAMBIO DE PASWORD
       tempPass=""; //OJO QUE AQUI SE ESTA RESETEANDO LA PASS
       dblCheck="";
       i=6;
       lcd.clear();
       tone(buzzer2,2000,800);
-      estado = 0; 
+      estado = 0; //Va para Desarme
      }
      else{
       lcd.clear();
@@ -319,7 +416,7 @@ void dobleCheck(){
       tempPass="";
       dblCheck="";
       tone(buzzer2,500,500);
-      estado = 0;
+      estado = 0; //Va para Desarme 
      }
     }
     else if (teclaPresionada=='#'){
@@ -328,11 +425,99 @@ void dobleCheck(){
      tempPass="";
      dblCheck="";
      tone(buzzer2,500,500);
-     estado = 0;
+     estado = 0; //Va para Desarme 
     }
   }
 }
 
+
+//---Funciones de Alarma---
+void estadoIntruso(){
+  sonidoIntruso();
+  cerradura.write(cerrada);
+  lcd.setCursor(0,0);
+  lcd.print("Alerta Intruso");
+  lcd.setCursor(0,1);
+  lcd.print("PASS>>");
+  teclaPresionada = teclado.getKey();
+  if(teclaPresionada!=NO_KEY){
+    if(teclaPresionada=='1'||teclaPresionada=='2'||teclaPresionada=='3'||teclaPresionada=='4'||teclaPresionada=='5'||
+       teclaPresionada=='6'||teclaPresionada=='7'||teclaPresionada=='8'||teclaPresionada=='9'||teclaPresionada=='0'){
+     tempPass += teclaPresionada;
+     lcd.setCursor(i,1);
+     lcd.print("*");
+     i++;
+     tone(buzzer2,1500,100);
+    }
+    else if(teclaPresionada=='*'){
+     if(tempPass==password){
+      tempPass=""; //OJO QUE AQUI SE ESTA RESETEANDO LA PASS
+      i=6;
+      lcd.clear();
+      tone(buzzer2,2000,800);
+      noTone(buzzer1);
+      estado = 0; //Va para desarme
+     }
+     else{
+      lcd.clear();
+      i=6;
+      tempPass=""; //OJO QUE AQUI SE ESTA RESETEANDO LA PASS
+      tone(buzzer2,500,500);
+     }
+    }
+    else if (teclaPresionada=='#'){
+     lcd.clear();
+     i=6;
+     tempPass=""; //OJO QUE AQUI SE ESTA RESETEANDO LA PASS
+     tone(buzzer2,500,500); 
+    }
+  }
+}
+
+void estadoFuego(){
+  sonidoFuego();
+  cerradura.write(abierta);
+  lcd.setCursor(0,0);
+  lcd.print("Alerta Incendio");
+  lcd.setCursor(0,1);
+  lcd.print("PASS>>");
+  teclaPresionada = teclado.getKey();
+  if(teclaPresionada!=NO_KEY){
+    if(teclaPresionada=='1'||teclaPresionada=='2'||teclaPresionada=='3'||teclaPresionada=='4'||teclaPresionada=='5'||
+       teclaPresionada=='6'||teclaPresionada=='7'||teclaPresionada=='8'||teclaPresionada=='9'||teclaPresionada=='0'){
+     tempPass += teclaPresionada;
+     lcd.setCursor(i,1);
+     lcd.print("*");
+     i++;
+     tone(buzzer2,1500,100);
+    }
+    else if(teclaPresionada=='*'){
+     if(tempPass==password){
+      tempPass=""; //OJO QUE AQUI SE ESTA RESETEANDO LA PASS
+      i=6;
+      lcd.clear();
+      tone(buzzer2,2000,800);
+      noTone(buzzer1);
+      estado = 0; //Va para Desarme
+     }
+     else{
+      lcd.clear();
+      i=6;
+      tempPass=""; //OJO QUE AQUI SE ESTA RESETEANDO LA PASS
+      tone(buzzer2,500,500);
+     }
+    }
+    else if (teclaPresionada=='#'){
+     lcd.clear();
+     i=6;
+     tempPass=""; //OJO QUE AQUI SE ESTA RESETEANDO LA PASS
+     tone(buzzer2,500,500); 
+    }
+  }
+}
+
+
+//---Funciones de espera---
 //---Funcion que genera el tiempo de espera antes de armar el sistema---
 void funcionEspera(){
   esperaActual = millis();
@@ -345,15 +530,15 @@ void funcionEspera(){
  }
  else{
   if(tempPass==password){
-   tempPass=""; //OJO QUE AQUI SE ESTA RESETEANDO LA PASS Depende de que haga el estado, en este caso es xq solo hay un estado intermedio
+   tempPass=""; //OJO QUE AQUI SE ESTA RESETEANDO LA PASS
    i=6;
    lcd.clear();
-   noTone(11);
-   noTone(12);
+   noTone(11); //buzzer 1
+   noTone(12); //buzzer 2
    estado = 2; //va para estado armado
   }
   else if(tempPass==modNoche){
-   tempPass="";
+   tempPass=""; //OJO QUE AQUI SE ESTA RESETEANDO LA PASS
    i=6;
    lcd.clear();
    noTone(11);
@@ -361,6 +546,69 @@ void funcionEspera(){
    estado = 3; //va para estado noche
   }
  }
+}
+
+//---Funcion que genera el tiempo de espera antes de ir a las alarmas---
+void funcionEspera2(){
+  esperaActual2 = millis();
+  teclaPresionada = teclado.getKey();
+ if(esperaActual2- esperaAnterior2 <= tiempoEspera){
+  lcd.setCursor(0,0);
+  lcd.print("Alerta Intruso");
+  lcd.setCursor(0,1);
+  lcd.print("PASS>>");
+  sonidoEspera();
+  if(teclaPresionada!=NO_KEY){
+    if(teclaPresionada=='1'||teclaPresionada=='2'||teclaPresionada=='3'||teclaPresionada=='4'||teclaPresionada=='5'||
+       teclaPresionada=='6'||teclaPresionada=='7'||teclaPresionada=='8'||teclaPresionada=='9'||teclaPresionada=='0'){
+     tempPass += teclaPresionada;
+     lcd.setCursor(i,1);
+     lcd.print("*");
+     i++;
+     tone(buzzer2,1500,100);
+    }
+    else if(teclaPresionada=='*'){
+     if(tempPass==password){
+      tempPass=""; //OJO QUE AQUI SE ESTA RESETEANDO LA PASS
+      i=6;
+      lcd.clear();
+      tone(buzzer2,2000,800);
+      noTone(buzzer1);
+      estado = 0; //Va para Desarme 
+     }
+     else{
+      lcd.clear();
+      i=6;
+      tempPass=""; //OJO QUE AQUI SE ESTA RESETEANDO LA PASS
+      tone(buzzer2,500,500);
+     }
+    }
+    else if (teclaPresionada=='#'){
+     lcd.clear();
+     i=6;
+     tempPass=""; //OJO QUE AQUI SE ESTA RESETEANDO LA PASS
+     tone(buzzer2,500,500); 
+    }
+  }  
+ }
+ else{
+  if(tempPass==password){
+   tempPass=""; //OJO QUE AQUI SE ESTA RESETEANDO LA PASS
+   i=6;
+   lcd.clear();
+   noTone(11);
+   noTone(12);
+   estado = 0; //va para estado desarmado
+  }
+  else{
+   tempPass=""; //OJO QUE AQUI SE ESTA RESETEANDO LA PASS
+   i=6;
+   lcd.clear();
+   noTone(11);
+   noTone(12);
+   estado = 4; //va para estado intruso
+  }
+ } 
 }
 
 
