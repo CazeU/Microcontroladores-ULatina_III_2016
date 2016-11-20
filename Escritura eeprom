@@ -1,0 +1,24 @@
+#include <EEPROM.h>
+
+int addr = 0;
+String masterPass = "2580";
+int valor=0;
+int lectura=0;
+void setup() {
+  Serial.begin(9600);
+}
+
+void loop() {
+
+  valor=masterPass.toInt();
+
+  EEPROM.write(addr, valor);
+
+  lectura=EEPROM.read(addr);
+  
+  Serial.print(masterPass);
+  Serial.print( " / ");
+  Serial.print(valor);
+  Serial.print( " / ");
+  Serial.println(lectura);
+}
