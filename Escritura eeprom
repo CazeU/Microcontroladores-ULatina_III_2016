@@ -1,24 +1,53 @@
 #include <EEPROM.h>
 
-int addr = 0;
-String masterPass = "2580";
-int valor=0;
-int lectura=0;
+#include <Keypad.h>
+
+//Configurando Keypad
+const byte numFilas = 4; //numero de filas en el teclado
+const byte numColum = 4; //numero de columnas en el teclado
+char teclaPresionada;
+char keys[numFilas][numColum]=  //Configurando el contenido del teclado
+{
+  {'1', '2', '3', 'A'},
+  {'4', '5', '6', 'B'},
+  {'7', '8', '9', 'C'},
+  {'*', '0', '#', 'D'}
+};
+
+//codigo para conectar el teclado con los pines de Arduino
+byte pinsFil[numFilas] = {A8,A9,A10,A11}; //siempre que se cambien de lugar o de pines el teclaso hay modificar estas lineas
+byte pinsCol[numColum] = {A12,A13,A14,A15};   //que corresponden al ordenamiento de las filas y las columnas
+Keypad teclado = Keypad(makeKeymap(keys), pinsFil, pinsCol, numFilas, numColum); 
+
+
 void setup() {
   Serial.begin(9600);
+
 }
-
+String valor="";
+int valor2=0;
+int lectura=0;
 void loop() {
-
-  valor=masterPass.toInt();
-
-  EEPROM.write(addr, valor);
-
-  lectura=EEPROM.read(addr);
-  
-  Serial.print(masterPass);
-  Serial.print( " / ");
-  Serial.print(valor);
-  Serial.print( " / ");
-  Serial.println(lectura);
+  teclaPresionada = teclado.getKey();
+   if(teclaPresionada!=NO_KEY){
+      if(teclaPresionada=='1'||teclaPresionada=='2'||teclaPresionada=='3'||teclaPresionada=='4'||teclaPresionada=='5'||
+       teclaPresionada=='6'||teclaPresionada=='7'||teclaPresionada=='8'||teclaPresionada=='9'||teclaPresionada=='0'){
+       
+        valor += teclaPresionada;
+    
+        valor2= valor.toInt();
+    }
+   }
+    if(teclaPresionada=='*'){
+      EEPROM.write(0,valor2);
+    } else if (teclaPresionada == '#') {
+      lectura= EEPROM.read(0);
+      Serial.println(lectura);
+    } else if(teclaPresionada == 'A') {
+      Serial.print(valor);
+      Serial.print(" / ");
+      Serial.println(valor2);   
+    } else if (teclaPresionada == 'B'){
+      valor="";
+    }
 }
