@@ -1,6 +1,8 @@
+#include <EEPROMex.h>
 #include <Keypad.h>
 #include <LiquidCrystal.h>
 #include <Servo.h>
+
 
 //Configurando Keypad
 const byte numFilas = 4; //numero de filas en el teclado
@@ -41,10 +43,10 @@ unsigned long esperaActual=0;
 unsigned long esperaAnterior=0;
 unsigned long esperaActual2=0;
 unsigned long esperaAnterior2=0;
-const int tiempoEspera = 15000;
+const int tiempoEspera = 5000; //OJO TIENE SOLO 5 SEGUNDOS;
 
 //Variables para las Password:
-String password = "2580"; //Master pass por defecto.
+char password [5]; //Master pass por defecto.
 String modNoche = "147"; //Pass para activar modo nocturno
 String tempPass = "";
 String dblCheck = "";
@@ -68,7 +70,7 @@ void setup() {
 
 }
 
-void loop() {
+void loop() {  
   switch (estado){
     case 0: //Desarme
     estadoDesarmado();
@@ -116,7 +118,9 @@ void loop() {
 
 //---Funcion para Digitar claves y armar el sistema---
 void estadoDesarmado(){
+  EEPROM.readBlock<char>(0, password, 5);
   cerradura.write(abierta);
+  avisandoCalma(); //Aqui le esta avisando cada 5 segundos a la Raspi que todo esta en calma.
   lcd.setCursor(0,0);
   lcd.print("SistemaDesarmado");
   lcd.setCursor(0,1);
@@ -129,50 +133,43 @@ void estadoDesarmado(){
         lcd.clear();
         esperaAnterior = millis();
         estado = 1; //va para Espera
-        Serial.println(0); //Raspi no haga acciones
         }
       else{
-        lcd.clear();
-        i=6;
-        tempPass="";
+        reseteo(); //OJO AQUI RESETA LA PASS
         tone(buzzer2,500,500);
      }
     }
     else if (teclaPresionada=='#'){
-     lcd.clear();
-     i=6;
-     tempPass="";
+     reseteo(); //OJO AQUI RESETA LA PASS
      tone(buzzer2,500,500); 
     }
     else if (teclaPresionada =='A'){
-     lcd.clear();
-     i=6;
-     tempPass="";
+     reseteo(); //OJO AQUI RESETA LA PASS
      estado = 6; //Va para Solicitud de Cambio de Pass
      tone(buzzer2,1000,500);
     }
     else if(teclaPresionada =='C'){
-     lcd.clear();
-     i=6;
-     tempPass="";
+     reseteo();  //OJO AQUI RESETA LA PASS
      estado = 4; //Va para Intruso
      cerradura.write(cerrada);
-     Serial.println(1); //Raspi sepa de intruso
     }
     else if(teclaPresionada =='D'){
-     lcd.clear();
-     i=6;
-     tempPass="";
+     reseteo(); //OJO AQUI RESETA LA PASS
      estado = 5; //Va para Fuego
-     Serial.println(2); //Raspi sepa de incendio
     }
   }
+  if(digitalRead(temp)||(analogRead(sensorHumo)>limiteHumo)){
+     reseteo(); //OJO AQUI RESETA LA PASS
+     estado = 5; //Va para Fuego
+    }
 }
 
 //---Funciones para Digitar claves y desarmar el sistema---
 
 //---Funcion de sistema Armado---
 void estadoArmado(){
+  EEPROM.readBlock<char>(0, password, 5);
+  avisandoCalma(); //Aqui le esta avisando cada 5 segundos a la Raspi que todo esta en calma.
   lcd.setCursor(0,0);
   lcd.print("Sistema Armado");
   lcd.setCursor(0,1);
@@ -182,56 +179,37 @@ void estadoArmado(){
     lecturaNumerica();
     if(teclaPresionada=='*'){
      if(tempPass==password){
-      tempPass=""; //OJO QUE AQUI SE ESTA RESETEANDO LA PASS
-      i=6;
-      lcd.clear();
+      reseteo(); //OJO AQUI RESETA LA PASS
       tone(buzzer2,2000,800);
       estado = 0; //Va para Desarme
-      Serial.println(0); //Raspi no tome acciones
      }
      else{
-      lcd.clear();
-      i=6;
-      tempPass="";
+      reseteo(); //OJO AQUI RESETA LA PASS
       tone(buzzer2,500,500);
      }
     }
     else if (teclaPresionada=='#'){
-     lcd.clear();
-     i=6;
-     tempPass="";
+     reseteo(); //OJO AQUI RESETA LA PASS
      tone(buzzer2,500,500); 
     }
     else if(teclaPresionada =='C'){
-     lcd.clear();
-     i=6;
-     tempPass="";
+     reseteo(); //OJO AQUI RESETA LA PASS
      estado = 4; //Va para Intruso
      cerradura.write(cerrada);
-     Serial.println(1); //Raspi sepa de intruso
     }
     else if(teclaPresionada =='D'){
-     lcd.clear();
-     i=6;
-     tempPass="";
+     reseteo();  //OJO AQUI RESETA LA PASS
      estado = 5; //Va para Fuego
-     Serial.println(2); //Raspi sepa de incendio
     }
   }
   if(digitalRead(pir)||digitalRead(redSwitch)){ //OJO recordar que el redswitch tiene logica inertida por el INPUT_PULLUP
-    lcd.clear();
-    i=6;
-    tempPass="";
+    reseteo(); //OJO AQUI RESETA LA PASS
     esperaAnterior2 = millis();
     estado = 9; //Va para Espera2
-    Serial.println(0); //Raspi no tome acciones
   }
   if(digitalRead(temp)||(analogRead(sensorHumo)>limiteHumo)){
-    lcd.clear();
-    i=6;
-    tempPass="";
+    reseteo(); //OJO AQUI RESETA LA PASS
     estado = 5; //Va para Fuego
-    Serial.println(2); //Raspi sepa de incendio
   }
   if(!digitalRead(apertura)){
     cerradura.write(abierta);    
@@ -241,6 +219,8 @@ void estadoArmado(){
 
 //--Funcion del modo nocturno---
 void estadoNoche(){
+  EEPROM.readBlock<char>(0, password, 5);
+  avisandoCalma(); //Aqui le esta avisando cada 5 segundos a la Raspi que todo esta en calma.
   lcd.setCursor(0,0);
   lcd.print("Modo Nocturno");
   lcd.setCursor(0,1);
@@ -250,56 +230,37 @@ void estadoNoche(){
     lecturaNumerica();
     if(teclaPresionada=='*'){
      if(tempPass==password){
-      tempPass=""; //OJO QUE AQUI SE ESTA RESETEANDO LA PASS
-      i=6;
-      lcd.clear();
+      reseteo(); //OJO AQUI RESETA LA PASS
       tone(buzzer2,2000,800);
       estado = 0; //Va para Desarme
-      Serial.println(0); //Raspi no tome acciones
      }
      else{
-      lcd.clear();
-      i=6;
-      tempPass="";
+      reseteo(); //OJO AQUI RESETA LA PASS
       tone(buzzer2,500,500);
      }
     }
     else if (teclaPresionada=='#'){
-     lcd.clear();
-     i=6;
-     tempPass="";
+     reseteo(); //OJO AQUI RESETA LA PASS
      tone(buzzer2,500,500); 
     }
     else if(teclaPresionada =='C'){
-     lcd.clear();
-     i=6;
-     tempPass="";
+     reseteo(); //OJO AQUI RESETA LA PASS
      estado = 4; //Va para Intruso
      cerradura.write(cerrada);
-     Serial.println(1); //Raspi sepa de intruso
     }
     else if(teclaPresionada =='D'){
-     lcd.clear();
-     i=6;
-     tempPass="";
+     reseteo(); //OJO AQUI RESETA LA PASS
      estado = 5; //Va para Fuego
-     Serial.println(2); //Raspi sepa de incendio
     }
   }
   if(digitalRead(redSwitch)){
-    lcd.clear();
-    i=6;
-    tempPass="";
+    reseteo(); //OJO AQUI RESETA LA PASS
     esperaAnterior2 = millis();
     estado = 9; //Va para Espera 2
-    Serial.println(0); //Raspi no tome acciones
   }
   if(digitalRead(temp)||(analogRead(sensorHumo)>limiteHumo)){
-    lcd.clear();
-    i=6;
-    tempPass="";
+    reseteo(); //OJO AQUI RESETA LA PASS
     estado = 5; //Va para Fuego
-    Serial.println(2); //Raspi sepa de incendio
   }
   if(!digitalRead(apertura)){
     cerradura.write(abierta);
@@ -309,6 +270,8 @@ void estadoNoche(){
 
 //---Funciones para la secuencia de cambio de Password---
 void solicitudCambio(){
+  EEPROM.readBlock<char>(0, password, 5);
+  avisandoCalma(); //Aqui le esta avisando cada 5 segundos a la Raspi que todo esta en calma.
   lcd.setCursor(0,0);
   lcd.print("Ingrese Password");
   lcd.setCursor(0,1);
@@ -318,34 +281,26 @@ void solicitudCambio(){
     lecturaNumerica();
     if(teclaPresionada=='*'){
      if(tempPass==password){
-      tempPass=""; //OJO QUE AQUI SE ESTA RESETEANDO LA PASS
-      i=6;
-      lcd.clear();
+      reseteo(); //OJO AQUI RESETA LA PASS
       tone(buzzer2,2000,800);
       estado = 7; //Va para cambioPass
-      Serial.println(0); //Raspi no tome acciones
      }
      else{
-      lcd.clear();
-      i=6;
-      tempPass="";
+      reseteo(); //OJO AQUI RESETA LA PASS
       tone(buzzer2,500,500);
       estado = 0; //Va para Desarme
-      Serial.println(0); //Raspi no tome acciones
      }
     }
     else if (teclaPresionada=='#'){
-     lcd.clear();
-     i=6;
-     tempPass="";
+     reseteo(); //OJO AQUI RESETA LA PASS
      tone(buzzer2,500,500);
      estado = 0; //Va para Desarme
-     Serial.println(0); //Raspi no tome acciones
     }
   }
 }
 
 void estadoCambio(){
+  avisandoCalma(); //Aqui le esta avisando cada 5 segundos a la Raspi que todo esta en calma.
   lcd.setCursor(0,0);
   lcd.print("Nuevo Password");
   lcd.setCursor(0,1);
@@ -362,17 +317,15 @@ void estadoCambio(){
       tone(buzzer2,2000,800);
      }
     else if (teclaPresionada=='#'){
-     lcd.clear();
-     i=6;
-     tempPass=""; //OJO QUE AQUI SE ESTA RESETEANDO LA PASS
+     reseteo(); //OJO AQUI RESETA LA PASS
      tone(buzzer2,500,500);
      estado = 0;  // Va para Desarme
-     Serial.println(0); //Raspi no tome acciones
     }
   }
 }
   
 void dobleCheck(){
+  avisandoCalma(); //Aqui le esta avisando cada 5 segundos a la Raspi que todo esta en calma.
   lcd.setCursor(0,0);
   lcd.print("Repetir Password");
   lcd.setCursor(0,1);
@@ -382,40 +335,31 @@ void dobleCheck(){
     lecturaNumerica();
     if(teclaPresionada=='*'){
      if(tempPass==dblCheck){
-      password=dblCheck; //OJO CAMBIO DE PASWORD
-      tempPass=""; //OJO QUE AQUI SE ESTA RESETEANDO LA PASS
-      dblCheck="";
-      i=6;
-      lcd.clear();
+      dblCheck.toCharArray(password,5); //Combierto el dblCheck en char y lo guardo el pasword
+      EEPROM.writeBlock<char>(0, password,5); //Guardo password en la posicion 0 de la EEPROM
+      reseteo(); //OJO AQUI RESETA LA PASS
       tone(buzzer2,2000,800);
       estado = 0; //Va para Desarme
-      Serial.println(0); //Raspi no tome acciones
      }
      else{
-      lcd.clear();
-      i=6;
-      tempPass="";
-      dblCheck="";
+      reseteo(); //OJO AQUI RESETA LA PASS
       tone(buzzer2,500,500);
       estado = 0; //Va para Desarme
-      Serial.println(0); //Raspi no tome acciones 
      }
     }
     else if (teclaPresionada=='#'){
-     lcd.clear();
-     i=6;
-     tempPass="";
-     dblCheck="";
+     reseteo(); //OJO AQUI RESETA LA PASS
      tone(buzzer2,500,500);
      estado = 0; //Va para Desarme 
-     Serial.println(0); //Raspi no tome acciones
     }
   }
 }
 
 //---Funciones de Alarma---
 void estadoIntruso(){
+  EEPROM.readBlock<char>(0, password, 5);
   sonidoIntruso();
+  avisandoIntruso(); //Aqui le esta avisando cada segundo a la Raspi que hay un intruso.
   lcd.setCursor(0,0);
   lcd.print("Alerta Intruso");
   lcd.setCursor(0,1);
@@ -425,25 +369,18 @@ void estadoIntruso(){
     lecturaNumerica();
     if(teclaPresionada=='*'){
      if(tempPass==password){
-      tempPass=""; //OJO QUE AQUI SE ESTA RESETEANDO LA PASS
-      i=6;
-      lcd.clear();
+      reseteo(); //OJO AQUI RESETA LA PASS
       tone(buzzer2,2000,800);
       noTone(buzzer1);
       estado = 0; //Va para desarme
-      Serial.println(0); //Raspi no tome acciones
      }
      else{
-      lcd.clear();
-      i=6;
-      tempPass=""; //OJO QUE AQUI SE ESTA RESETEANDO LA PASS
+      reseteo(); //OJO AQUI RESETA LA PASS
       tone(buzzer2,500,500);
      }
     }
     else if (teclaPresionada=='#'){
-     lcd.clear();
-     i=6;
-     tempPass=""; //OJO QUE AQUI SE ESTA RESETEANDO LA PASS
+     reseteo(); //OJO AQUI RESETA LA PASS
      tone(buzzer2,500,500); 
     }
   }
@@ -453,7 +390,9 @@ void estadoIntruso(){
 }
 
 void estadoFuego(){
+  EEPROM.readBlock<char>(0, password, 5);
   sonidoFuego();
+  avisandoFuego(); //Aqui le esta avisando cada segundo a la Raspi que hay un incendio.
   cerradura.write(abierta);
   lcd.setCursor(0,0);
   lcd.print("Alerta Incendio");
@@ -464,25 +403,17 @@ void estadoFuego(){
    lecturaNumerica();
     if(teclaPresionada=='*'){
      if(tempPass==password){
-      tempPass=""; //OJO QUE AQUI SE ESTA RESETEANDO LA PASS
-      i=6;
-      lcd.clear();
+      reseteo(); //OJO AQUI RESETA LA PASS
       tone(buzzer2,2000,800);
       noTone(buzzer1);
       estado = 0; //Va para Desarme
-      Serial.println(0); //Raspi no tome acciones
      }
      else{
-      lcd.clear();
-      i=6;
-      tempPass=""; //OJO QUE AQUI SE ESTA RESETEANDO LA PASS
       tone(buzzer2,500,500);
      }
     }
     else if (teclaPresionada=='#'){
-     lcd.clear();
-     i=6;
-     tempPass=""; //OJO QUE AQUI SE ESTA RESETEANDO LA PASS
+     reseteo(); //OJO AQUI RESETA LA PASS
      tone(buzzer2,500,500); 
     }
   }
@@ -492,6 +423,8 @@ void estadoFuego(){
 //---Funciones de espera---
 //---Funcion que genera el tiempo de espera antes de armar el sistema---
 void funcionEspera(){
+ EEPROM.readBlock<char>(0, password, 5);
+ avisandoCalma(); //Aqui le esta avisando cada 5 segundos a la Raspi que todo esta en calma.
  esperaActual = millis();
  if(esperaActual- esperaAnterior <= tiempoEspera){
   lcd.setCursor(0,0);
@@ -502,30 +435,26 @@ void funcionEspera(){
  }
  else{
   if(tempPass==password){
-   tempPass=""; //OJO QUE AQUI SE ESTA RESETEANDO LA PASS
-   i=6;
-   lcd.clear();
+   reseteo(); //OJO AQUI RESETA LA PASS
    noTone(11); //buzzer 1
    noTone(12); //buzzer 2
    estado = 2; //va para estado armado
    cerradura.write(cerrada);
-   Serial.println(0); //Raspi no tome acciones
   }
   else if(tempPass==modNoche){
-   tempPass=""; //OJO QUE AQUI SE ESTA RESETEANDO LA PASS
-   i=6;
-   lcd.clear();
+   reseteo(); //OJO AQUI RESETA LA PASS
    noTone(11);
    noTone(12);
    estado = 3; //va para estado noche
    cerradura.write(cerrada);
-   Serial.println(0); //Raspi no tome acciones
   }
  }
 }
 
 //---Funcion que genera el tiempo de espera antes de ir a las alarmas---
 void funcionEspera2(){
+  EEPROM.readBlock<char>(0, password, 5);
+  avisandoCalma(); //Aqui le esta avisando cada 5 segundos a la Raspi que todo esta en calma.
   esperaActual2 = millis();
   teclaPresionada = teclado.getKey();
  if(esperaActual2- esperaAnterior2 <= tiempoEspera){
@@ -538,51 +467,99 @@ void funcionEspera2(){
     lecturaNumerica();
     if(teclaPresionada=='*'){
      if(tempPass==password){
-      tempPass=""; //OJO QUE AQUI SE ESTA RESETEANDO LA PASS
-      i=6;
-      lcd.clear();
+      reseteo(); //OJO AQUI RESETA LA PASS
       tone(buzzer2,2000,800);
       noTone(buzzer1);
       estado = 0; //Va para Desarme
-      Serial.println(0); //Raspi no tome acciones
      }
      else{
-      lcd.clear();
-      i=6;
-      tempPass=""; //OJO QUE AQUI SE ESTA RESETEANDO LA PASS
+      reseteo(); //OJO AQUI RESETA LA PASS
       tone(buzzer2,500,500);
      }
     }
     else if (teclaPresionada=='#'){
-     lcd.clear();
-     i=6;
-     tempPass=""; //OJO QUE AQUI SE ESTA RESETEANDO LA PASS
+     reseteo(); //OJO AQUI RESETA LA PASS
      tone(buzzer2,500,500); 
     }
   }
  }  
   else{
   if(tempPass==password){
-   tempPass=""; //OJO QUE AQUI SE ESTA RESETEANDO LA PASS
-   i=6;
-   lcd.clear();
+   reseteo(); //OJO AQUI RESETA LA PASS
    noTone(11);
    noTone(12);
    estado = 0; //va para estado desarmado
-   Serial.println(0); //Raspi no tome acciones
   }
   else{
-   tempPass=""; //OJO QUE AQUI SE ESTA RESETEANDO LA PASS
-   i=6;
-   lcd.clear();
+   reseteo(); //OJO AQUI RESETA LA PASS
    noTone(11);
    noTone(12);
    estado = 4; //va para estado intruso
    cerradura.write(cerrada);
-   Serial.println(1); //Raspi sepa de intruso
   }
  } 
 }
+
+
+
+//-----------Funciones Varias------------------------
+//-----------Función de lectura numérica-------------
+void lecturaNumerica(){
+  if(teclaPresionada=='1'||teclaPresionada=='2'||teclaPresionada=='3'||teclaPresionada=='4'||teclaPresionada=='5'||
+     teclaPresionada=='6'||teclaPresionada=='7'||teclaPresionada=='8'||teclaPresionada=='9'||teclaPresionada=='0'){
+   tempPass += teclaPresionada;
+   lcd.setCursor(i,1);
+   lcd.print("*");
+   i++;
+   tone(buzzer2,1500,100);
+  }
+}
+
+
+//---Funcion para resetear---
+void reseteo(){
+  tempPass="";
+  dblCheck="";
+  i=6;
+  lcd.clear();  
+}
+
+
+//Funciones para imprimir las ordenes de la Raspberry Pi
+
+unsigned long  calmaAnterior = 0;
+void avisandoCalma(){
+  unsigned long calmaActual = millis();
+  if (calmaActual-calmaAnterior <= 5000){
+    
+  }else{
+    Serial.println(0);
+    calmaAnterior=calmaActual;
+  }
+}
+
+unsigned long  intrusoAnterior = 0;
+void avisandoIntruso(){
+  unsigned long intrusoActual = millis();
+  if (intrusoActual-intrusoAnterior <= 1000){ 
+     
+  }else{
+    Serial.println(1);
+    intrusoAnterior=intrusoActual;
+  }
+}
+
+unsigned long  fuegoAnterior = 0;
+void avisandoFuego(){
+  unsigned long fuegoActual = millis();
+  if (fuegoActual-fuegoAnterior <= 1000){
+     
+  }else{
+    Serial.println(2);
+    fuegoAnterior=fuegoActual;
+  }
+}
+
 
 
 //-----------Funciones de Sonido-----------
@@ -633,17 +610,5 @@ void sonidoFuego(){
          SF_tiempoAnterior = SF_tiempoActual;
        }    
     } 
-  }
-}
-
-//-----------Función de lectura numérica-------------
-void lecturaNumerica(){
-  if(teclaPresionada=='1'||teclaPresionada=='2'||teclaPresionada=='3'||teclaPresionada=='4'||teclaPresionada=='5'||
-     teclaPresionada=='6'||teclaPresionada=='7'||teclaPresionada=='8'||teclaPresionada=='9'||teclaPresionada=='0'){
-   tempPass += teclaPresionada;
-   lcd.setCursor(i,1);
-   lcd.print("*");
-   i++;
-   tone(buzzer2,1500,100);
   }
 }
