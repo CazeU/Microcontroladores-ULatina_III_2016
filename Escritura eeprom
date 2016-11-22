@@ -1,6 +1,6 @@
-#include <EEPROM.h>
-
+#include <EEPROMex.h>
 #include <Keypad.h>
+
 
 //Configurando Keypad
 const byte numFilas = 4; //numero de filas en el teclado
@@ -20,13 +20,15 @@ byte pinsCol[numColum] = {A12,A13,A14,A15};   //que corresponden al ordenamiento
 Keypad teclado = Keypad(makeKeymap(keys), pinsFil, pinsCol, numFilas, numColum); 
 
 
+String valor="";
+char valor2 [5];
+char salida [5];
+
+
 void setup() {
   Serial.begin(9600);
-
 }
-String valor="";
-int valor2=0;
-int lectura=0;
+
 void loop() {
   teclaPresionada = teclado.getKey();
    if(teclaPresionada!=NO_KEY){
@@ -35,14 +37,15 @@ void loop() {
        
         valor += teclaPresionada;
     
-        valor2= valor.toInt();
+         
     }
    }
     if(teclaPresionada=='*'){
-      EEPROM.write(0,valor2);
+      valor.toCharArray(valor2,5);
+      EEPROM.writeBlock<char>(0, valor2,5);
     } else if (teclaPresionada == '#') {
-      lectura= EEPROM.read(0);
-      Serial.println(lectura);
+      EEPROM.readBlock<char>(0, salida,5);
+      Serial.println(salida);
     } else if(teclaPresionada == 'A') {
       Serial.print(valor);
       Serial.print(" / ");
