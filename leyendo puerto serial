@@ -1,7 +1,11 @@
 import serial
-import time
+
 ser = serial.Serial('/dev/ttyACM0', 9600)
-arduino = 0
 while True:
-        arduino = ser.readline()
-        print(arduino)
+        arduino = float(ser.readline())
+        if arduino == 0:
+                print("Todo Bien")
+        elif arduino == 1:
+                print("Hay un Intruso")
+        elif arduino == 2:
+                print ("Hay un Incendio")
