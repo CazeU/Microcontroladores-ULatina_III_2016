@@ -23,7 +23,7 @@ Keypad teclado = Keypad(makeKeymap(keys), pinsFil, pinsCol, numFilas, numColum);
 
 
 //Configurando LCD
-LiquidCrystal lcd(14,15,16,17,18,19);
+LiquidCrystal lcd(7,8,9,10,11,12);
 
 //Configurando Servo
 Servo cerradura;
@@ -35,8 +35,13 @@ const int pir = A0; //sensor de movimiento
 const int redSwitch = A1; //hace falta el sensor magnetico para puertas y ventanas
 const int temp = A2; //sensor de temperatura
 const int sensorHumo = A3; //sensor de humo 
-const int buzzer1 = 11; //buzzer para las alarmas
-const int buzzer2 = 12; //buzzer para el panel de control
+const int buzzer1 = 20; //buzzer para las alarmas
+const int buzzer2 = 21; //buzzer para el panel de control
+const int led0 = 14;
+const int led1 = 15;
+const int led2 = 16;
+const int led3 = 17;
+const int led4 = 18;
 
 //Variables de tiempo:
 unsigned long esperaActual=0;
@@ -55,7 +60,7 @@ String dblCheck = "";
 int estado = 0; //0: desarme, 1: espera, 2: armado, 3: noche, 4: intruso, 5: fuego, 6: solicitudCambio, 7: cambioPass, 8:DobleCheck,
 int i = 6; //Contador para arreglos
 const int limiteHumo = 350;
-const int apertura = 10; //para abrir el cervo cuando uno esta afuera
+const int apertura = 14; //para abrir el cervo cuando uno esta afuera
 
 
 void setup() {
@@ -67,7 +72,11 @@ void setup() {
  pinMode(temp, INPUT);
  pinMode(redSwitch,INPUT_PULLUP); //OJO LOGICA INVERTIDA 
  pinMode(apertura,INPUT_PULLUP);  //OJO LOGICA INVERTIDA
-
+ pinMode(led0,OUTPUT);
+ pinMode(led1,OUTPUT);
+ pinMode(led2,OUTPUT);
+ pinMode(led3,OUTPUT);
+ pinMode(led4,OUTPUT);
 }
 
 void loop() {  
@@ -120,6 +129,7 @@ void loop() {
 void estadoDesarmado(){
   EEPROM.readBlock<char>(0, password, 5);
   cerradura.write(abierta);
+  ledoff();
   avisandoCalma(); //Aqui le esta avisando cada 5 segundos a la Raspi que todo esta en calma.
   lcd.setCursor(0,0);
   lcd.print("SistemaDesarmado");
@@ -169,6 +179,7 @@ void estadoDesarmado(){
 //---Funcion de sistema Armado---
 void estadoArmado(){
   EEPROM.readBlock<char>(0, password, 5);
+  ledoff();
   avisandoCalma(); //Aqui le esta avisando cada 5 segundos a la Raspi que todo esta en calma.
   lcd.setCursor(0,0);
   lcd.print("Sistema Armado");
@@ -220,6 +231,7 @@ void estadoArmado(){
 //--Funcion del modo nocturno---
 void estadoNoche(){
   EEPROM.readBlock<char>(0, password, 5);
+  ledoff();
   avisandoCalma(); //Aqui le esta avisando cada 5 segundos a la Raspi que todo esta en calma.
   lcd.setCursor(0,0);
   lcd.print("Modo Nocturno");
@@ -271,6 +283,7 @@ void estadoNoche(){
 //---Funciones para la secuencia de cambio de Password---
 void solicitudCambio(){
   EEPROM.readBlock<char>(0, password, 5);
+  ledoff();
   avisandoCalma(); //Aqui le esta avisando cada 5 segundos a la Raspi que todo esta en calma.
   lcd.setCursor(0,0);
   lcd.print("Ingrese Password");
@@ -300,6 +313,7 @@ void solicitudCambio(){
 }
 
 void estadoCambio(){
+  ledoff();
   avisandoCalma(); //Aqui le esta avisando cada 5 segundos a la Raspi que todo esta en calma.
   lcd.setCursor(0,0);
   lcd.print("Nuevo Password");
@@ -325,6 +339,7 @@ void estadoCambio(){
 }
   
 void dobleCheck(){
+  ledoff();
   avisandoCalma(); //Aqui le esta avisando cada 5 segundos a la Raspi que todo esta en calma.
   lcd.setCursor(0,0);
   lcd.print("Repetir Password");
@@ -358,6 +373,7 @@ void dobleCheck(){
 //---Funciones de Alarma---
 void estadoIntruso(){
   EEPROM.readBlock<char>(0, password, 5);
+  ledoff();
   sonidoIntruso();
   avisandoIntruso(); //Aqui le esta avisando cada segundo a la Raspi que hay un intruso.
   lcd.setCursor(0,0);
@@ -392,6 +408,7 @@ void estadoIntruso(){
 void estadoFuego(){
   EEPROM.readBlock<char>(0, password, 5);
   sonidoFuego();
+  luz();
   avisandoFuego(); //Aqui le esta avisando cada segundo a la Raspi que hay un incendio.
   cerradura.write(abierta);
   lcd.setCursor(0,0);
@@ -424,27 +441,28 @@ void estadoFuego(){
 //---Funcion que genera el tiempo de espera antes de armar el sistema---
 void funcionEspera(){
  EEPROM.readBlock<char>(0, password, 5);
+ ledoff();
  avisandoCalma(); //Aqui le esta avisando cada 5 segundos a la Raspi que todo esta en calma.
  esperaActual = millis();
  if(esperaActual- esperaAnterior <= tiempoEspera){
   lcd.setCursor(0,0);
   lcd.print("Armando Sistema");
   lcd.setCursor(0,1);
-  lcd.print("15 segundos");
+  lcd.print("5 segundos");
   sonidoEspera();  
  }
  else{
   if(tempPass==password){
    reseteo(); //OJO AQUI RESETA LA PASS
-   noTone(11); //buzzer 1
-   noTone(12); //buzzer 2
+   noTone(buzzer1); //buzzer 1
+   noTone(buzzer2); //buzzer 2
    estado = 2; //va para estado armado
    cerradura.write(cerrada);
   }
   else if(tempPass==modNoche){
    reseteo(); //OJO AQUI RESETA LA PASS
-   noTone(11);
-   noTone(12);
+   noTone(buzzer1);
+   noTone(buzzer2);
    estado = 3; //va para estado noche
    cerradura.write(cerrada);
   }
@@ -454,6 +472,7 @@ void funcionEspera(){
 //---Funcion que genera el tiempo de espera antes de ir a las alarmas---
 void funcionEspera2(){
   EEPROM.readBlock<char>(0, password, 5);
+  ledoff();
   avisandoCalma(); //Aqui le esta avisando cada 5 segundos a la Raspi que todo esta en calma.
   esperaActual2 = millis();
   teclaPresionada = teclado.getKey();
@@ -530,7 +549,7 @@ void reseteo(){
 unsigned long  calmaAnterior = 0;
 void avisandoCalma(){
   unsigned long calmaActual = millis();
-  if (calmaActual-calmaAnterior <= 5000){
+  if (calmaActual-calmaAnterior <= 1000){
     
   }else{
     Serial.println(0);
@@ -560,6 +579,45 @@ void avisandoFuego(){
   }
 }
 
+
+//---Funcion de las luces de incendio---
+int estadoled = LOW;
+unsigned long luzAnterior = 0;
+void luz(){
+  unsigned long luzTranscurrido = millis();
+  switch (estadoled){
+    case LOW:
+      if(luzTranscurrido - luzAnterior >= 400){
+        luzAnterior = luzTranscurrido;
+        estadoled = HIGH;
+        digitalWrite (led0, estadoled);
+        digitalWrite (led1, estadoled);
+        digitalWrite (led2, estadoled);
+        digitalWrite (led3, estadoled);
+        digitalWrite (led4, estadoled);
+      }
+      break;
+    case HIGH:
+      if(luzTranscurrido - luzAnterior >= 50){
+        luzAnterior = luzTranscurrido;
+        estadoled = LOW;
+        digitalWrite (led0, estadoled);
+        digitalWrite (led1, estadoled);
+        digitalWrite (led2, estadoled);
+        digitalWrite (led3, estadoled);
+        digitalWrite (led4, estadoled);
+      }
+      break;
+  }
+}
+
+void ledoff(){
+  digitalWrite (led0, LOW);
+  digitalWrite (led1, LOW);
+  digitalWrite (led2, LOW);
+  digitalWrite (led3, LOW);
+  digitalWrite (led4, LOW);
+}
 
 
 //-----------Funciones de Sonido-----------
