@@ -162,6 +162,7 @@ void estadoDesarmado(){
     }
     else if(teclaPresionada =='C'){
      reseteo();  //OJO AQUI RESETA LA PASS
+     Serial.println(4);
      estado = 4; //Va para Intruso
      cerradura.write(cerrada);
     }
@@ -207,6 +208,7 @@ void estadoArmado(){
     }
     else if(teclaPresionada =='C'){
      reseteo(); //OJO AQUI RESETA LA PASS
+     Serial.println(4);
      estado = 4; //Va para Intruso
      cerradura.write(cerrada);
     }
@@ -259,6 +261,7 @@ void estadoNoche(){
     }
     else if(teclaPresionada =='C'){
      reseteo(); //OJO AQUI RESETA LA PASS
+     Serial.println(4);
      estado = 4; //Va para Intruso
      cerradura.write(cerrada);
     }
@@ -475,7 +478,7 @@ void funcionEspera(){
 void funcionEspera2(){
   EEPROM.readBlock<char>(0, password, 5);
   ledoff();
-  video(); //avisa que alguine entró 
+  video(); //avisa que alguien entró 
   esperaActual2 = millis();
   teclaPresionada = teclado.getKey();
  if(esperaActual2- esperaAnterior2 <= tiempoEspera){
