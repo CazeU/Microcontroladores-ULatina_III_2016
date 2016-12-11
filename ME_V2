@@ -37,18 +37,18 @@ const int temp = A2; //sensor de temperatura
 const int sensorHumo = A3; //sensor de humo 
 const int buzzer1 = 20; //buzzer para las alarmas
 const int buzzer2 = 21; //buzzer para el panel de control
-const int led0 = 14;
-const int led1 = 15;
-const int led2 = 16;
-const int led3 = 17;
-const int led4 = 18;
+const int led0 = 15;
+const int led1 = 16;
+const int led2 = 17;
+const int led3 = 18;
+const int led4 = 19;
 
 //Variables de tiempo:
 unsigned long esperaActual=0;
 unsigned long esperaAnterior=0;
 unsigned long esperaActual2=0;
 unsigned long esperaAnterior2=0;
-const int tiempoEspera = 5000; //OJO TIENE SOLO 5 SEGUNDOS;
+const int tiempoEspera = 15000; //OJO TIENE SOLO 5 SEGUNDOS;
 
 //Variables para las Password:
 char password [5]; //Master pass por defecto.
@@ -77,6 +77,8 @@ void setup() {
  pinMode(led2,OUTPUT);
  pinMode(led3,OUTPUT);
  pinMode(led4,OUTPUT);
+ noTone(buzzer1);
+ noTone(buzzer2);
 }
 
 void loop() {  
@@ -448,7 +450,7 @@ void funcionEspera(){
   lcd.setCursor(0,0);
   lcd.print("Armando Sistema");
   lcd.setCursor(0,1);
-  lcd.print("5 segundos");
+  lcd.print("15 segundos");
   sonidoEspera();  
  }
  else{
@@ -473,7 +475,7 @@ void funcionEspera(){
 void funcionEspera2(){
   EEPROM.readBlock<char>(0, password, 5);
   ledoff();
-  avisandoCalma(); //Aqui le esta avisando cada 5 segundos a la Raspi que todo esta en calma.
+  video(); //avisa que alguine entró 
   esperaActual2 = millis();
   teclaPresionada = teclado.getKey();
  if(esperaActual2- esperaAnterior2 <= tiempoEspera){
@@ -576,6 +578,17 @@ void avisandoFuego(){
   }else{
     Serial.println(2);
     fuegoAnterior=fuegoActual;
+  }
+}
+
+unsigned long  videoAnterior = 0;
+void video(){
+  unsigned long videoActual = millis();
+  if (videoActual-videoAnterior <= 1000){
+     
+  }else{
+    Serial.println(3);
+    videoAnterior=videoActual;
   }
 }
 
