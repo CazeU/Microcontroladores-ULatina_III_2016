@@ -32,12 +32,7 @@ A continuación, se presentarán los detalles y características de funcionamien
 
 \section{Descripción del proyecto}
 
-Este proyecto consiste un sistema de seguridad que implementa características de sistemas comerciales contra intrusos, 
-sistemas contra incendios y de vigilancia, todo en uno solo con el objetivo de abaratar costos y a su vez, realizar un 
-sistema más eficiente que los encontrados en el comercio actualmente siendo este orientado a comercios u hogares pequeños
-o medianos. Dentro de las principales características del sistema tenemos el funcionamiento en conjunto de una tarjeta Arduino 
-y una Raspberry Pi 3, lo que nos permitirá combinar una amplia gama de funciones. Raspduino contiene los siguientes componentes
-y características:
+Este proyecto consiste un sistema de seguridad que implementa características de sistemas comerciales contra intrusos, sistemas contra incendios y de vigilancia, todo en uno solo con el objetivo de abaratar costos y a su vez, realizar un sistema más eficiente que los encontrados en el comercio actualmente siendo este orientado a comercios u hogares pequeños o medianos. Dentro de las principales características del sistema tenemos el funcionamiento en conjunto de una tarjeta Arduino y una Raspberry Pi 3, lo que nos permitirá combinar una amplia gama de funciones. Raspduino contiene los siguientes componentes y características:
 
 \begin{itemize}
 	\item Sensores de movimiento.
@@ -47,8 +42,7 @@ y características:
 	\item Cámara de vigilancia.
 	\item Notificación de eventos vía correo electrónico.
 	\item Almacenamiento de videos en la nube.
-\end{itemize}
-
+\end{itemize} 
  
 \section{Requerimientos del sistema}
 
@@ -105,15 +99,11 @@ Para la implementación del sistema se utilizaron los siguientes componentes:
 
 \section{Solución del problema}
 
-El principal problema que se presenta a la hora de armar un sistema como el que se presenta en este proyecto, está en controlar 
-e integrar en el momento correcto cada uno de los componentes que lo conforman. Para lograr un orden eficiente de cada uno de los 
-elementos de nuestro sistema, se diseñó un diagrama de estados, con el fin de implementar una máquina de estados que pueda administrar
-todos los componentes eficientemente y tomar las decisiones correspondientes a cada situación de forma oportuna. En la figura~\ref{me1} 
-y en la figura~\ref{me2} podemos apreciar el diagrama de estados en el que se basa el sistema de seguridad.  
+El principal problema que se presenta a la hora de armar un sistema como el que se presenta en este proyecto, está en controlar e integrar en el momento correcto cada uno de los componentes que lo conforman. Para lograr un orden eficiente de cada uno de los elementos de nuestro sistema, se diseñó un diagrama de estados, con el fin de implementar una máquina de estados que pueda administrar todos los componentes eficientemente y tomar las decisiones correspondientes a cada situación de forma oportuna. En la figura~\ref{me1} y en la figura~\ref{me2} podemos apreciar el diagrama de estados en el que se basa el sistema de seguridad.  
 
   \begin{figure}[hbtp]
  	\begin{center}
- 		\includegraphics[scale=0.5]{../Proyecto/Diagrama_Fuego.pdf}  
+ 		\includegraphics[scale=0.5]{../Proyecto/Diagrama_Fuego}
  		%\includegraphics[width=0.5\textwidth]{Imagenes/L2_Arq_maq}
  		 	\end{center}
  	\caption{Máquina de estados del sistema ejecutando una alarma de incendio.}\label{me1}
@@ -127,15 +117,7 @@ y en la figura~\ref{me2} podemos apreciar el diagrama de estados en el que se ba
  	\caption{Máquina de estados del sistema ejecutando una alarma de intruso.}\label{me2}
  \end{figure}
 
-Después de generar código que se comporte eficientemente para controlar sensores y generar alertas es que se procede a preparar 
-el ambiente donde el usuario va a interactuar con el sistema, es decir, controlar el mismo. Es entonces que surge la necesidad de
-implementar el panel de control, el cual debe proporcionar la forma de ingresar datos, controlar las diferentes funciones y desplegar 
-información para guiar al usuario. Para ello utilizamos un panel matricial de 4x4, una pantalla LCD de dieciséis columnas y dos filas.
-Por motivos de seguridad del sistema, se procedió a almacenar la contraseña del sistema en la memoria EEPROM interna del Arduino Mega 2560,
-esto último, ya que es necesario almacenar la contraseña del usuario en un lugar donde a pesar de que se de un apagón el sistema no vuelva
-a los valores preestablecidos, ya que si esto ocurre haría que el sistema no sea confiable. 
-También se necesitaron las librerías correspondientes, a saber, Keypad.h, LiquidCrystal.h y EEPROMex.h. Todas estas librerías están
-disponibles en el gestor de librerías del IDE de Arduino. 
+Después de generar código que se comporte eficientemente para controlar sensores y generar alertas es que se procede a preparar el ambiente donde el usuario va a interactuar con el sistema, es decir, controlar el mismo. Es entonces que surge la necesidad de implementar el panel de control, el cual debe proporcionar la forma de ingresar datos, controlar las diferentes funciones y desplegar información para guiar al usuario. Para ello utilizamos un panel matricial de 4x4, una pantalla LCD de dieciséis columnas y dos filas. Por motivos de seguridad del sistema, se procedió a almacenar la contraseña del sistema en la memoria EEPROM interna del Arduino Mega 2560, esto último, ya que es necesario almacenar la contraseña del usuario en un lugar donde a pesar de que se de un apagón el sistema no vuelva a los valores preestablecidos, ya que si esto ocurre haría que el sistema no sea confiable. También se necesitaron las librerías correspondientes, a saber, Keypad.h, LiquidCrystal.h y EEPROMex.h. Todas estas librerías están disponibles en el gestor de librerías del IDE de Arduino. 
 
 El despliegue de la información se realizó mediante la ejecución de líneas de código similares a las que se muestran a continuación:
  
@@ -150,14 +132,13 @@ lcd.print("PASS>>");
 	\end{verbatim}
 \end{small}
 
-Para el ingreso de datos, se debe controlar el teclado con los comandos propios de la librería Keypad.h, para ello se elaboró una función
-encargada de capturar los datos ingresados. Esta función será llamada cada vez que sea necesario. A continuación, se observa el código 
-para esta función.
+Para el ingreso de datos, se debe controlar el teclado con los comandos propios de la librería Keypad.h, para ello se elaboró una función encargada de capturar los datos ingresados. Esta función será llamada cada vez que sea necesario. A continuación, se observa el código para esta función.
 
 \begin{small}
 	\begin{verbatim}
 
 void lecturaNumerica(){
+
   if(teclaPresionada=='1'||teclaPresionada=='2'||
      teclaPresionada=='3'||teclaPresionada=='4'||
      teclaPresionada=='5'||teclaPresionada=='6'||
@@ -176,7 +157,6 @@ void lecturaNumerica(){
  
 Finalmente, el tercer elemento y el más importante de ellos es la memoria EEPROM, esta se programa y se controla con la librería EEPROMex.h.
 
-
 Para poder leer la password previamente cargada en la EEPROM ejecutamos el siguiente código: 
 
 \begin{small}
@@ -189,15 +169,13 @@ EEPROM.readBlock<char>(0, password, 5);
 
 De esta forma, ya se puede comparar lo que el usuario ingresa con lo que es aceptado por el sistema.
 
-El siguiente problema a resolver es la comunicación entre el Arduino  y la Raspberry Pi. Para realizar esto se hace uso del puerto serial.
-El Arduino imprime un valor numérico dependiendo del estado en el que se encuentre, luego la Raspbery PI, mediante un programa en Python,
-lee ese dato y toma una decisión al respecto. Para asegurar una comunicación constante decidimos que el Arduino este enviando el dato numérico
-cada segundo.
+El siguiente problema a resolver es la comunicación entre el Arduino  y la Raspberry Pi. Para realizar esto se hace uso del puerto serial. El Arduino imprime un valor numérico dependiendo del estado en el que se encuentre, luego la Raspbery PI, mediante un programa en Python, lee ese dato y toma una decisión al respecto. Para asegurar una comunicación constante decidimos que el Arduino este enviando el dato numérico cada segundo.
 
 \begin{small}
 	\begin{verbatim}
 
 unsigned long  calmaAnterior = 0;
+
 void avisandoCalma(){
   unsigned long calmaActual = millis();
   if (calmaActual-calmaAnterior <= 1000){
@@ -223,42 +201,27 @@ arduino = int(ser.readline())
 	\end{verbatim}
 \end{small}
 
-Como se observa del código anterior, primero importamos la librería serial, luego creamos un objeto llamado “ser”, donde se guarda el
-dato en formato string, proveniente del puerto serial. Seguidamente se crea un objeto llamado “arduino” encargado de guardar el dato 
-recibido ya convertido en un entero. Y de esta forma ya el sistema es capaz de tomar decisiones, dependiendo de los datos recibidos del 
-Arduino. 
-En cuanto a la captura de video, se utiliza la cámara de Raspberry Pi con su respectiva librería llamada “picamera”. Para conservar el 
-video capturado durante un evento de intrusión, se decide guardar el archivo de video en una cuenta en Dropbox, para ello de utiliza la
-librería llamada “dropbox”. Para ver en detalle la programación se puede referir al archivo llamado capturando.py, el cual se encuentra 
-el repositorio de GitHub “Microcontroladores-ULatina III 2016”. El link lo facilitaremos en los anexos. 
+Como se observa del código anterior, primero importamos la librería serial, luego creamos un objeto llamado “ser”, donde se guarda el dato en formato string, proveniente del puerto serial. Seguidamente se crea un objeto llamado “arduino” encargado de guardar el dato recibido ya convertido en un entero. Y de esta forma ya el sistema es capaz de tomar decisiones, dependiendo de los datos recibidos del Arduino. 
 
-Las notificaciones de eventos se realizan mediante el uso de correo electrónico a través de una cuenta en Gmail. Para ello de utiliza 
-la librería “smtplib”. Los detalles de este programa se pueden encontrar en el archivo llamado “alertas.py”, del mismo repositorio.
+En cuanto a la captura de video, se utiliza la cámara de Raspberry Pi con su respectiva librería llamada “picamera”. Para conservar el video capturado durante un evento de intrusión, se decide guardar el archivo de video en una cuenta en Dropbox, para ello de utiliza la librería llamada “dropbox”. Para ver en detalle la programación se puede referir al archivo llamado capturando.py, el cual se encuentra el repositorio de GitHub “Microcontroladores-ULatina III 2016”. El link lo facilitaremos en los anexos. 
+
+Las notificaciones de eventos se realizan mediante el uso de correo electrónico a través de una cuenta en Gmail. Para ello de utiliza la librería “smtplib”. Los detalles de este programa se pueden encontrar en el archivo llamado “alertas.py”, del mismo repositorio.
 
 
 \section{Análisis de resultados}
 
-Todos los requerimientos principales se pudieron cumplir de forma satisfactoria, todos los sensores estuvieron trabajando de forma 
-correcta y oportuna. Las alertas vía correo electrónico se generaron sin problemas y se recibieron de la misma manera, con un pequeño
-retraso, propio de la red de Internet. La grabación de video se generó según lo esperado y se pudo almacenar de manera satisfactoria en 
-la cuenta de Dropbox destinada para dicha función,lográndose cumplir uno de los requerimientos secundarios.
+Todos los requerimientos principales se pudieron cumplir de forma satisfactoria, todos los sensores estuvieron trabajando de forma correcta y oportuna. Las alertas vía correo electrónico se generaron sin problemas y se recibieron de la misma manera, con un pequeño retraso, propio de la red de Internet. La grabación de video se generó según lo esperado y se pudo almacenar de manera satisfactoria en la cuenta de Dropbox destinada para dicha función,lográndose cumplir uno de los requerimientos secundarios.
 
-En cuanto a los requerimientos no cumplidos, no se pudo generar la desactivación del sistema de seguridad mediante reconocimiento facial,
-y tampoco se pudo implementar la aplicación para controlar el sistema desde dispositivos móviles. Estos dos puntos no se llevaron a cabo 
-debido a que los requerimientos obligatorios consumieron todo el tiempo del que se disponía para terminar y entregar el proyecto, por lo 
-que no se pueden mencionar recomendaciones o fallas encontradas en referencia a los requerimientos opcionales no cumplidos.   
+En cuanto a los requerimientos no cumplidos, no se pudo generar la desactivación del sistema de seguridad mediante reconocimiento facial, y tampoco se pudo implementar la aplicación para controlar el sistema desde dispositivos móviles. Estos dos puntos no se llevaron a cabo debido a que los requerimientos obligatorios consumieron todo el tiempo del que se disponía para terminar y entregar el proyecto, por lo que no se pueden mencionar recomendaciones o fallas encontradas en referencia a los requerimientos opcionales no cumplidos.   
 
 
 \section{Recomendaciones}	
 
 
 \begin{itemize}
-\item Para desplegar la información es mucho mejor la utilización de una pantalla LCD de 20x4. De esta forma ampliamos el espacio
- para escribir mensajes y no tendremos palabras pegadas. 
-\item Es muy importante que tanto el Arduino como la Raspberry PI, cuenten con su respectiva alimentación, de esta forma, el mal 
- funcionamiento de una no afectara a la otra. 
-\item El programa implementado en Arduino se puede cargar sin problemas en un Arduino Uno,abaratando un poco el costo del proyecto.
- De ser necesario se puede usar una extensión de pines.
+\item Para desplegar la información es mucho mejor la utilización de una pantalla LCD de 20x4. De esta forma ampliamos el espacio para escribir mensajes y no tendremos palabras pegadas. 
+\item Es muy importante que tanto el Arduino como la Raspberry PI, cuenten con su respectiva alimentación, de esta forma, el mal funcionamiento de una no afectara a la otra. 
+\item El programa implementado en Arduino se puede cargar sin problemas en un Arduino Uno,abaratando un poco el costo del proyecto. De ser necesario se puede usar una extensión de pines.
 \item Se puede implementar un pequeño circuito con LEDs Infrarrojos para proporcionar una visión nocturna a la cámara.
 \item Entre más rango de alcance tenga el sensor PIR, mejor va a ser el detector de movimiento del sistema.
 \item El sensor de humo y el sensor de temperatura siempre deben permanecer juntos ya que ambos forman parte del detector de incendios.
@@ -273,14 +236,11 @@ La bitácora de trabajo se encuentra en el siguiente link.
 
 \begin{small}
 	\begin{verbatim}
-
 github.com/CazeU/Microcontroladores-ULatina_III_2016
-	
 	\end{verbatim}
 \end{small}
 
 \subsection{Referencias y Fuentes de Información}
-
 
 Teclado:
 \begin{small}
@@ -308,6 +268,7 @@ EEPROM:
 		
 	\end{verbatim}
 \end{small}
+
 
 Buzzer:
 \begin{small}
@@ -352,6 +313,5 @@ Otras aplicaciones:
 http://librosweb.es/libro/python/ 
 	\end{verbatim}
 \end{small}
- 
 
 \end{document} 
