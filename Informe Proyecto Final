@@ -32,14 +32,6 @@ A continuación, se presentarán los detalles y características de funcionamien
 
 \section{Descripción del proyecto}
 
-En este proyecto se presenta un sistema de seguridad que cuenta con los elementos básicos de un sistema comercial, es decir, 
-sensores de movimiento y sensores magnéticos (para puertas y ventanas), cámara de vigilancia, sensores de humo y temperatura, 
-control de acceso electrónico, sistema de notificaciones de eventos vía e-mail, y un panel de control que consta de un teclado y 
-una pequeña pantalla LCD. El fin de este proyecto es obtener un sistema que pueda realizar funciones de monitoreo de una casa 
-pequeña o mediana, a un costo relativamente bajo. Dentro de las principales características del sistema tenemos el funcionamiento 
-conjunto de un sistema Arduino y una Raspberry Pi 3, lo que nos permitirá combinar una amplia gama de funciones.
-
-$$
 Este proyecto consiste un sistema de seguridad que implementa características de sistemas comerciales contra intrusos, 
 sistemas contra incendios y de vigilancia, todo en uno solo con el objetivo de abaratar costos y a su vez, realizar un 
 sistema más eficiente que los encontrados en el comercio actualmente siendo este orientado a comercios u hogares pequeños
@@ -54,8 +46,7 @@ y características:
 	\item Cámara de vigilancia.
 	\item Notificación de eventos vía correo electrónico.
 	\item Almacenamiento de videos en la nube.
- 
-$
+
  
 \section{Requerimientos del sistema}
 
