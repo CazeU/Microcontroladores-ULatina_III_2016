@@ -38,6 +38,7 @@ sistema más eficiente que los encontrados en el comercio actualmente siendo est
 o medianos. Dentro de las principales características del sistema tenemos el funcionamiento en conjunto de una tarjeta Arduino 
 y una Raspberry Pi 3, lo que nos permitirá combinar una amplia gama de funciones. Raspduino contiene los siguientes componentes
 y características:
+
 \begin{itemize}
 	\item Sensores de movimiento.
 	\item Sensores magnéticos para puertas y ventanas.
@@ -46,6 +47,7 @@ y características:
 	\item Cámara de vigilancia.
 	\item Notificación de eventos vía correo electrónico.
 	\item Almacenamiento de videos en la nube.
+\end{itemize}
 
  
 \section{Requerimientos del sistema}
