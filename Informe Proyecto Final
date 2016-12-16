@@ -307,43 +307,6 @@ EEPROM:
 	\end{verbatim}
 \end{small}
 
-Buzzer:
-\begin{small}
-	\begin{verbatim}
-https://www.arduino.cc/en/Reference/Tone
-https://www.arduino.cc/en/Reference/NoTone 
-	\end{verbatim}
-\end{small}
-
-Almacenamiento en Dropbox:
-\begin{small}
-	\begin{verbatim}
-https://www.dropbox.com/developers/documentation/python#tutorial
-	\end{verbatim}
-\end{small}
-
-Envío de correos electrónicos:
-\begin{small}
-	\begin{verbatim}
-https://support.google.com/a/answer/176600?hl=es 
-http://naelshiab.com/tutorial-send-email-python/
-	\end{verbatim}
-\end{small}
-
-Utilización de cámara:
-\begin{small}
-	\begin{verbatim}
-https://geekytheory.com/tutorial-raspberry-pi-uso-de-picamera-con-python/ 
-https://www.raspberrypi.org/documentation/usage/camera/python/README.md 
-	\end{verbatim}
-\end{small}
-
-Otras aplicaciones:
-\begin{small}
-	\begin{verbatim}
-http://librosweb.es/libro/python/ 
-	\end{verbatim}
-\end{small}
 
  
 
